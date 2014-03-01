@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+    <ModulePrefs title="__MSG_portlet.workloadtext.name__" directory_title="__MSG_portlet.workloadtext.name__" description="__MSG_portlet.workloadtext.description__"
+                 author="AM Works" author_affiliation="AM Works"
+                 author_location="Moscow, Russia" height="300"
+                 screenshot='#staticResourceUrl("com.liatrio.atlas.plugins.customfilterlists:customfilterlists-gadget", "spenttime-text.png")'
+                 thumbnail='#staticResourceUrl("com.liatrio.atlas.plugins.customfilterlists:customfilterlists-gadget", "spenttime-text-thumb.png")'>
+        <Optional feature="gadget-directory">
+            <Param name="categories">
+                JIRA
+            </Param>
+        </Optional>
+        <Require feature="views"/>
+        <Optional feature="atlassian.util"/>
+        <Require feature="setprefs"/>
+        <Require feature="settitle"/>
+        <Require feature="dynamic-height"/>
+        <Require feature="oauthpopup"/>
+        #oauth
+        #supportedLocales("gadget.common,gadget.filterstats,portlet.workloadtext,gadget.workloadtext,core.dateutils")
+    </ModulePrefs>
+    <UserPref name="isConfigured" datatype="hidden" default_value="false"/>
+    <UserPref name="isPopup" datatype="hidden" default_value="false"/>
+    <UserPref name="refresh" datatype="hidden" default_value="false"/>
+    <UserPref name="projectOrFilterId" datatype="hidden" />
+    <UserPref name="timeprefview" datatype="hidden"/>
+    <UserPref name="daterange" datatype="hidden"/>
+    <UserPref name="customTitle" datatype="hidden"/>
+    <UserPref name="customMessage" datatype="hidden"/>
+    <Content type="html" view="profile,canvas,home">
+        <![CDATA[
+        #requireResource("com.atlassian.jira.gadgets:autocomplete")
+        #includeResources()
+
+        <style type="text/css">
+            .view {
+                margin: 12px;
+                padding: 0.5em 1em 0.25em;
+            }
+        </style>
+
+        <script type="text/javascript">
+
+AJS.Gadget({
+    baseUrl: "__ATLASSIAN_BASE_URL__",
+    useOauth: "/rest/gadget/1.0/currentUser",
+    config: {
+        descriptor: function (args) {
+            var gadget = this;
+            var searchParam;
+            if (/^jql-/.test(this.getPref("projectOrFilterId")) || this.getPref("isPopup") === "true"){
+                searchParam =
+                    {
+                        userpref: "projectOrFilterId",
+                        type: "hidden",
+                        value: gadgets.util.unescapeString(gadget.getPref("projectOrFilterId"))
+                    };
+            }
+            else{
+                searchParam = AJS.gadget.fields.projectOrFilterPicker(gadget,"projectOrFilterId");
+            }
+
+            return  {
+                action: "/rest/pdworkloadplugin/1.0/workloadtext/config/validate",
+                theme : (function() { return gadgets.window.getViewportDimensions().width < 500 ? "top-label" : "long-label"; })(),
+                fields: [
+                    jQuery.extend(true, {}, searchParam, {
+                        label: gadget.getMsg("gadget.workloadtext.field.project.or.filter.name"),
+                        description: gadget.getMsg("gadget.workloadtext.field.project.or.filter.description")
+                    }),
+                    {
+                        userpref: "daterange",
+                        label: gadget.getMsg("gadget.workloadtext.field.daterange.name"),
+                        description: gadget.getMsg("gadget.workloadtext.field.daterange.name.description"),
+                        type: "select",
+                        selected: gadget.getPref("daterange"),
+                        options:[
+                            {
+                                label: gadget.getMsg("gadget.workloadtext.field.daterange.opt.thismonth"),
+                                value: "thismonth"
+                            },
+                            {
+                                label: gadget.getMsg("gadget.workloadtext.field.daterange.opt.previousmonth"),
+                                value: "previousmonth"
+                            },
+                            {
+                                label: gadget.getMsg("gadget.workloadtext.field.daterange.opt.thisyear"),
+                                value: "thisyear"
+                            },
+                            {
+                                label: gadget.getMsg("gadget.workloadtext.field.daterange.opt.previousyear"),
+                                value: "previousyear"
+                            }
+                        ]
+                    },
+                    {
+                        userpref: "timeprefview",
+                        label: gadget.getMsg("gadget.workloadtext.field.timeprefview.name"),
+                        description: gadget.getMsg("gadget.workloadtext.field.timeprefview.name.description"),
+                        type: "select",
+                        selected: gadget.getPref("timeprefview"),
+                        options:[
+                            {
+                                label: gadget.getMsg("gadget.workloadtext.field.timeprefview.opt.hours"),
+                                value: "hours"
+                            },
+                            {
+                                label: gadget.getMsg("gadget.workloadtext.field.timeprefview.opt.duration"),
+                                value: "duration"
+                            }
+                        ]
+                    },
+                    {
+                        userpref: "customTitle",
+                        label: gadget.getMsg("gadget.workloadtext.field.customTitle.name"),
+                        description: gadget.getMsg("gadget.workloadtext.field.customTitle.name.description"),
+                        type: "text",
+                        value: gadget.getPref("customTitle")
+                    },
+                    {
+                        userpref: "customMessage",
+                        label: gadget.getMsg("gadget.workloadtext.field.customMessage.name"),
+                        description: gadget.getMsg("gadget.workloadtext.field.customMessage.description"),
+                        type: "text",
+                        value: gadget.getPref("customMessage")
+                    },
+                    AJS.gadget.fields.nowConfigured()
+                ]
+            };
+        }
+    },
+    view: {
+        enableReload: true,
+        onResizeReload: true,
+        template: function (args) {
+            var gadget = this;
+
+            gadget.getView().empty();
+
+            var requiresTitle = function() {
+                return args.textdata.filterTitle && args.textdata.filterTitle !== "" && args.textdata.filterTitle !== "gadget.common.anonymous.filter" && gadget.getPref("isPopup") === "false";
+            };
+
+            var setTitles = function () {
+                if (requiresTitle()) {
+                    gadget.projectOrFilterName = args.textdata.filterTitle;
+                    if (args.textdata.customTitle) {
+                        gadgets.window.setTitle(args.textdata.customTitle);
+                    } else {
+                        gadgets.window.setTitle(AJS.format("__MSG_gadget.workloadtext.title.specific__"));
+                    }
+                }
+            }();
+
+            var getDataContainer = function ()
+            {
+                var textdata = AJS.$("<div id='textdata' />").appendTo(gadget.getView());
+                return function () {
+                    return textdata;
+                };
+            }();
+
+            var safeEscapeString = function(text) {
+                if(text) {
+                    return gadgets.util.escapeString(text);
+                } else {
+                    return '';
+                }
+            };
+
+            var setSummary = (function() {
+                var linkStart = "";
+                var linkEnd = "";
+                if(requiresTitle()) {
+                    linkStart = "<a href=\"__ATLASSIAN_BASE_URL__" + args.textdata.filterUrl + "\" target=\"_parent\" title=\"" + safeEscapeString(args.textdata.filterTitle) + "\">";
+                    linkEnd = "</a>";
+                }
+
+                var customMessage = "";
+                if (args.textdata.customMessage) {
+                    customMessage = args.textdata.customMessage;
+                } else {
+                    customMessage = "__MSG_gadget.workloadtext.heading__";
+                }
+                getDataContainer().append(
+                        AJS.$("<h1/>").append(linkStart + AJS.format(customMessage, "<strong>" + args.textdata.timeSpent + "</strong>") + linkEnd)
+                );
+            })();
+        },
+        args: [{
+            key: "textdata",
+            ajaxOptions: function () {
+                if (gadgets.views.getCurrentView().getName() === "canvas") {
+                    return {
+                        url: "/rest/liatrio-customfilterlists/1.0/customfilterlists/generate",
+                        data:  {
+                            projectOrFilterId: gadgets.util.unescapeString(this.getPref("projectOrFilterId")),
+                            timeprefview: gadgets.util.unescapeString(this.getPref("timeprefview")),
+                            daterange: gadgets.util.unescapeString(this.getPref("daterange")),
+                            customTitle: gadgets.util.unescapeString(this.getPref("customTitle")),
+                            customMessage: gadgets.util.unescapeString(this.getPref("customMessage")),
+                            returnData: true
+                        }
+                    };
+                } else {
+                    return {
+                        url: "/rest/liatrio-customfilterlists/1.0/customfilterlists/generate",
+                        data:  {
+                            projectOrFilterId: gadgets.util.unescapeString(this.getPref("projectOrFilterId")),
+                            timeprefview: gadgets.util.unescapeString(this.getPref("timeprefview")),
+                            daterange: gadgets.util.unescapeString(this.getPref("daterange")),
+                            customTitle: gadgets.util.unescapeString(this.getPref("customTitle")),
+                            customMessage: gadgets.util.unescapeString(this.getPref("customMessage"))
+                        }
+                    };
+                }
+            }
+        }]
+    }
+});
+
+        </script>
+        ]]>
+    </Content>
+</Module>
