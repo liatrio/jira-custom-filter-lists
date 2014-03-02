@@ -18,8 +18,8 @@
     <!-- REST -->
     <rest key="customfilterlists-endpoints" name="Custom Filter Lists plugin REST endpoints" path="/liatrio-customfilterlists" version="1.0" description="REST endpoints for the Custom Filter Lists Plugin."></rest>
 
-    <resource type="download" name="spenttime-pie.png" location="ru/andreymarkelov/atlas/plugins/pd/images/spenttime-pie.png"/>
-    <resource type="download" name="spenttime-pie-thumb.png" location="ru/andreymarkelov/atlas/plugins/pd/images/spenttime-pie-thumb.png"/>
+    <resource type="download" name="spenttime-pie.png" location="com/liatrio/atlas/plugins/customfilterlists/images/spenttime-pie.png"/>
+    <resource type="download" name="spenttime-pie-thumb.png" location="com/liatrio/atlas/plugins/customfilterlists/images/spenttime-pie-thumb.png"/>
 
     <!-- Gadgets -->
     <gadget key="customfilterlists-gadget" name="Custom Filter Lists Gadget" location="com/liatrio/atlas/plugins/customfilterlists/gadgets/customfilterlists-gadget.xml">

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Module>
-    <ModulePrefs title="__MSG_portlet.workloadtext.name__" directory_title="__MSG_portlet.workloadtext.name__" description="__MSG_portlet.workloadtext.description__"
+    <ModulePrefs title="__MSG_customfilterlists.customfilterlistgadget.name__" directory_title="__MSG_customfilterlists.customfilterlistgadget.name__" description="__MSG_customfilterlists.customfilterlistgadget.descr__"
                  author="AM Works" author_affiliation="AM Works"
                  author_location="Moscow, Russia" height="300"
-                 screenshot='#staticResourceUrl("com.liatrio.atlas.plugins.customfilterlists:customfilterlists-gadget", "spenttime-text.png")'
-                 thumbnail='#staticResourceUrl("com.liatrio.atlas.plugins.customfilterlists:customfilterlists-gadget", "spenttime-text-thumb.png")'>
+                 screenshot='#staticResourceUrl("com.liatrio.atlas.plugins.customfilterlists:customfilterlists-gadget", "spenttime-pie.png")'
+                 thumbnail='#staticResourceUrl("com.liatrio.atlas.plugins.customfilterlists:customfilterlists-gadget", "spenttime-pie-thumb.png")'>
         <Optional feature="gadget-directory">
             <Param name="categories">
                 JIRA
@@ -17,28 +17,22 @@
         <Require feature="dynamic-height"/>
         <Require feature="oauthpopup"/>
         #oauth
-        #supportedLocales("gadget.common,gadget.filterstats,portlet.workloadtext,gadget.workloadtext,core.dateutils")
+        #supportedLocales("gadget.common,gadget.filterstats,customfilterlists.customfilterlistgadget,core.dateutils")
     </ModulePrefs>
     <UserPref name="isConfigured" datatype="hidden" default_value="false"/>
     <UserPref name="isPopup" datatype="hidden" default_value="false"/>
     <UserPref name="refresh" datatype="hidden" default_value="false"/>
-    <UserPref name="projectOrFilterId" datatype="hidden" />
-    <UserPref name="timeprefview" datatype="hidden"/>
-    <UserPref name="daterange" datatype="hidden"/>
     <UserPref name="customTitle" datatype="hidden"/>
-    <UserPref name="customMessage" datatype="hidden"/>
+    <UserPref name="displayStyle" datatype="hidden"/>
+    <UserPref name="includeLinks" datatype="hidden" />
+    <UserPref name="includeCounts" datatype="hidden"/>
+    <UserPref name="filterListFilter" datatype="hidden"/>
+    <UserPref name="filterIDs" datatype="hidden"/>
+    <UserPref name="onlyFavourites" datatype="hidden"/>
     <Content type="html" view="profile,canvas,home">
         <![CDATA[
         #requireResource("com.atlassian.jira.gadgets:autocomplete")
         #includeResources()
-
-        <style type="text/css">
-            .view {
-                margin: 12px;
-                padding: 0.5em 1em 0.25em;
-            }
-        </style>
-
         <script type="text/javascript">
 
 AJS.Gadget({
@@ -47,82 +41,105 @@ AJS.Gadget({
     config: {
         descriptor: function (args) {
             var gadget = this;
-            var searchParam;
-            if (/^jql-/.test(this.getPref("projectOrFilterId")) || this.getPref("isPopup") === "true"){
-                searchParam =
-                    {
-                        userpref: "projectOrFilterId",
-                        type: "hidden",
-                        value: gadgets.util.unescapeString(gadget.getPref("projectOrFilterId"))
-                    };
-            }
-            else{
-                searchParam = AJS.gadget.fields.projectOrFilterPicker(gadget,"projectOrFilterId");
-            }
 
             return  {
-                action: "/rest/pdworkloadplugin/1.0/workloadtext/config/validate",
-                theme : (function() { return gadgets.window.getViewportDimensions().width < 500 ? "top-label" : "long-label"; })(),
+                action: "/rest/liatrio-customfilterlists/1.0/customfilterlists/config/validate",
+                theme : function() {
+                    if (gadgets.window.getViewportDimensions().width < 450){
+                        return "gdt top-label";
+                    } else {
+                        return "gdt";
+                    }
+                }(),
                 fields: [
-                    jQuery.extend(true, {}, searchParam, {
-                        label: gadget.getMsg("gadget.workloadtext.field.project.or.filter.name"),
-                        description: gadget.getMsg("gadget.workloadtext.field.project.or.filter.description")
-                    }),
-                    {
-                        userpref: "daterange",
-                        label: gadget.getMsg("gadget.workloadtext.field.daterange.name"),
-                        description: gadget.getMsg("gadget.workloadtext.field.daterange.name.description"),
-                        type: "select",
-                        selected: gadget.getPref("daterange"),
-                        options:[
-                            {
-                                label: gadget.getMsg("gadget.workloadtext.field.daterange.opt.thismonth"),
-                                value: "thismonth"
-                            },
-                            {
-                                label: gadget.getMsg("gadget.workloadtext.field.daterange.opt.previousmonth"),
-                                value: "previousmonth"
-                            },
-                            {
-                                label: gadget.getMsg("gadget.workloadtext.field.daterange.opt.thisyear"),
-                                value: "thisyear"
-                            },
-                            {
-                                label: gadget.getMsg("gadget.workloadtext.field.daterange.opt.previousyear"),
-                                value: "previousyear"
-                            }
-                        ]
-                    },
-                    {
-                        userpref: "timeprefview",
-                        label: gadget.getMsg("gadget.workloadtext.field.timeprefview.name"),
-                        description: gadget.getMsg("gadget.workloadtext.field.timeprefview.name.description"),
-                        type: "select",
-                        selected: gadget.getPref("timeprefview"),
-                        options:[
-                            {
-                                label: gadget.getMsg("gadget.workloadtext.field.timeprefview.opt.hours"),
-                                value: "hours"
-                            },
-                            {
-                                label: gadget.getMsg("gadget.workloadtext.field.timeprefview.opt.duration"),
-                                value: "duration"
-                            }
-                        ]
-                    },
                     {
                         userpref: "customTitle",
-                        label: gadget.getMsg("gadget.workloadtext.field.customTitle.name"),
-                        description: gadget.getMsg("gadget.workloadtext.field.customTitle.name.description"),
+                        label: gadget.getMsg("customfilterlists.customfilterlistgadget.customTitle"),
+                        description: gadget.getMsg("customfilterlists.customfilterlistgadget.customTitle.descr"),
                         type: "text",
                         value: gadget.getPref("customTitle")
                     },
                     {
-                        userpref: "customMessage",
-                        label: gadget.getMsg("gadget.workloadtext.field.customMessage.name"),
-                        description: gadget.getMsg("gadget.workloadtext.field.customMessage.description"),
+                        userpref: "displayStyle",
+                        label: gadget.getMsg("customfilterlists.customfilterlistgadget.displayStyle"),
+                        description: gadget.getMsg("customfilterlists.customfilterlistgadget.displayStyle.descr"),
+                        type: "select",
+                        selected: gadget.getPref("displayStyle"),
+                        options:[
+                            {
+                                label: gadget.getMsg("customfilterlists.customfilterlistgadget.displayStyle.html"),
+                                value: "html"
+                            },
+                            {
+                                label: gadget.getMsg("customfilterlists.customfilterlistgadget.displayStyle.dropdown"),
+                                value: "dropdown"
+                            }
+                        ]
+                    },
+                    {
+                        userpref: "includeLinks",
+                        label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeLinks"),
+                        description: gadget.getMsg("customfilterlists.customfilterlistgadget.includeLinks.descr"),
+                        type: "select",
+                        selected: gadget.getPref("includeLinks"),
+                        options:[
+                            {
+                                label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeLinks.yes"),
+                                value: "yes"
+                            },
+                            {
+                                label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeLinks.no"),
+                                value: "no"
+                            }
+                        ]
+                    },
+                    {
+                        userpref: "includeCounts",
+                        label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeCounts"),
+                        description: gadget.getMsg("customfilterlists.customfilterlistgadget.includeCounts.descr"),
+                        type: "select",
+                        selected: gadget.getPref("includeCounts"),
+                        options:[
+                            {
+                                label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeCounts.yes"),
+                                value: "yes"
+                            },
+                            {
+                                label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeCounts.no"),
+                                value: "no"
+                            }
+                        ]
+                    },
+                    {
+                        userpref: "filterListFilter",
+                        label: gadget.getMsg("customfilterlists.customfilterlistgadget.filterListFilter"),
+                        description: gadget.getMsg("customfilterlists.customfilterlistgadget.filterListFilter.descr"),
                         type: "text",
-                        value: gadget.getPref("customMessage")
+                        value: gadget.getPref("filterListFilter")
+                    },
+                    {
+                        userpref: "filterIDs",
+                        label: gadget.getMsg("customfilterlists.customfilterlistgadget.filterIDs"),
+                        description: gadget.getMsg("customfilterlists.customfilterlistgadget.filterIDs.descr"),
+                        type: "text",
+                        value: gadget.getPref("filterIDs")
+                    },
+                    {
+                        userpref: "onlyFavourites",
+                        label: gadget.getMsg("customfilterlists.customfilterlistgadget.onlyFavourites"),
+                        description: gadget.getMsg("customfilterlists.customfilterlistgadget.onlyFavourites.descr"),
+                        type: "select",
+                        selected: gadget.getPref("onlyFavourites"),
+                        options:[
+                            {
+                                label: gadget.getMsg("customfilterlists.customfilterlistgadget.onlyFavourites.yes"),
+                                value: "yes"
+                            },
+                            {
+                                label: gadget.getMsg("customfilterlists.customfilterlistgadget.onlyFavourites.no"),
+                                value: "no"
+                            }
+                        ]
                     },
                     AJS.gadget.fields.nowConfigured()
                 ]
@@ -138,25 +155,24 @@ AJS.Gadget({
             gadget.getView().empty();
 
             var requiresTitle = function() {
-                return args.textdata.filterTitle && args.textdata.filterTitle !== "" && args.textdata.filterTitle !== "gadget.common.anonymous.filter" && gadget.getPref("isPopup") === "false";
+                return gadget.getPref("isPopup") === "false";
             };
 
             var setTitles = function () {
                 if (requiresTitle()) {
-                    gadget.projectOrFilterName = args.textdata.filterTitle;
-                    if (args.textdata.customTitle) {
-                        gadgets.window.setTitle(args.textdata.customTitle);
+                    gadget.projectOrFilterName = args.filterdata.filterTitle;
+                    if (args.filterdata.customTitle) {
+                        gadgets.window.setTitle(args.filterdata.customTitle);
                     } else {
-                        gadgets.window.setTitle(AJS.format("__MSG_gadget.workloadtext.title.specific__"));
+                        gadgets.window.setTitle(AJS.format("__MSG_customfilterlists.customfilterlistgadget.title__"));
                     }
                 }
             }();
 
-            var getDataContainer = function ()
-            {
-                var textdata = AJS.$("<div id='textdata' />").appendTo(gadget.getView());
+            var getDataContainer = function () {
+                var filterdata = AJS.$("<div id='filterdata'/>").appendTo(gadget.getView());
                 return function () {
-                    return textdata;
+                    return filterdata;
                 };
             }();
 
@@ -169,36 +185,31 @@ AJS.Gadget({
             };
 
             var setSummary = (function() {
-                var linkStart = "";
-                var linkEnd = "";
-                if(requiresTitle()) {
-                    linkStart = "<a href=\"__ATLASSIAN_BASE_URL__" + args.textdata.filterUrl + "\" target=\"_parent\" title=\"" + safeEscapeString(args.textdata.filterTitle) + "\">";
-                    linkEnd = "</a>";
-                }
-
                 var customMessage = "";
-                if (args.textdata.customMessage) {
-                    customMessage = args.textdata.customMessage;
+                if (args.filterdata.customMessage) {
+                    customMessage = args.filterdata.customMessage;
                 } else {
                     customMessage = "__MSG_gadget.workloadtext.heading__";
                 }
                 getDataContainer().append(
-                        AJS.$("<h1/>").append(linkStart + AJS.format(customMessage, "<strong>" + args.textdata.timeSpent + "</strong>") + linkEnd)
+                        AJS.$("<h1/>").append(AJS.format(customMessage, "<strong>" + args.filterdata.timeSpent + "</strong>"))
                 );
             })();
         },
         args: [{
-            key: "textdata",
+            key: "filterdata",
             ajaxOptions: function () {
                 if (gadgets.views.getCurrentView().getName() === "canvas") {
                     return {
                         url: "/rest/liatrio-customfilterlists/1.0/customfilterlists/generate",
                         data:  {
-                            projectOrFilterId: gadgets.util.unescapeString(this.getPref("projectOrFilterId")),
-                            timeprefview: gadgets.util.unescapeString(this.getPref("timeprefview")),
-                            daterange: gadgets.util.unescapeString(this.getPref("daterange")),
                             customTitle: gadgets.util.unescapeString(this.getPref("customTitle")),
-                            customMessage: gadgets.util.unescapeString(this.getPref("customMessage")),
+                            displayStyle: gadgets.util.unescapeString(this.getPref("displayStyle")),
+                            includeLinks: gadgets.util.unescapeString(this.getPref("includeLinks")),
+                            includeCounts: gadgets.util.unescapeString(this.getPref("includeCounts")),
+                            filterListFilter: gadgets.util.unescapeString(this.getPref("filterListFilter")),
+                            filterIDs: gadgets.util.unescapeString(this.getPref("filterIDs")),
+                            onlyFavourites: gadgets.util.unescapeString(this.getPref("onlyFavourites")),
                             returnData: true
                         }
                     };
@@ -206,11 +217,13 @@ AJS.Gadget({
                     return {
                         url: "/rest/liatrio-customfilterlists/1.0/customfilterlists/generate",
                         data:  {
-                            projectOrFilterId: gadgets.util.unescapeString(this.getPref("projectOrFilterId")),
-                            timeprefview: gadgets.util.unescapeString(this.getPref("timeprefview")),
-                            daterange: gadgets.util.unescapeString(this.getPref("daterange")),
                             customTitle: gadgets.util.unescapeString(this.getPref("customTitle")),
-                            customMessage: gadgets.util.unescapeString(this.getPref("customMessage"))
+                            displayStyle: gadgets.util.unescapeString(this.getPref("displayStyle")),
+                            includeLinks: gadgets.util.unescapeString(this.getPref("includeLinks")),
+                            includeCounts: gadgets.util.unescapeString(this.getPref("includeCounts")),
+                            filterListFilter: gadgets.util.unescapeString(this.getPref("filterListFilter")),
+                            filterIDs: gadgets.util.unescapeString(this.getPref("filterIDs")),
+                            onlyFavourites: gadgets.util.unescapeString(this.getPref("onlyFavourites"))
                         }
                     };
                 }

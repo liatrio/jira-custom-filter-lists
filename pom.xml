@@ -20,13 +20,13 @@
     <dependencies>
         <dependency>
             <groupId>com.atlassian.jira</groupId>
-            <artifactId>jira-api</artifactId>
+            <artifactId>atlassian-jira</artifactId>
             <version>${jira.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.atlassian.jira</groupId>
-            <artifactId>jira-core</artifactId>
+            <artifactId>jira-api</artifactId>
             <version>${jira.version}</version>
             <scope>provided</scope>
         </dependency>
@@ -37,7 +37,7 @@
             <scope>provided</scope>
         </dependency>-->
 
-        <dependency>
+<!--         <dependency>
             <groupId>com.atlassian.jira</groupId>
             <artifactId>jira-rest-plugin</artifactId>
             <version>${jira.rest.version}</version>
@@ -48,7 +48,7 @@
                     <artifactId>com.atlassian.jersey-library</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
+        </dependency> -->
         <dependency>
             <groupId>javax.ws.rs</groupId>
             <artifactId>jsr311-api</artifactId>
@@ -86,10 +86,10 @@
     </build>
 
     <properties>
-        <jira.version>5.0</jira.version>
         <!--<jira.version>6.1-OD-07</jira.version>-->
         <jira.rest.version>5.0</jira.rest.version>
-        <amps.version>4.0</amps.version>
+        <jira.version>5.0</jira.version>
+        <amps.version>4.1.2</amps.version>
         <useFastdevCli>false</useFastdevCli>
     </properties>
 </project>
