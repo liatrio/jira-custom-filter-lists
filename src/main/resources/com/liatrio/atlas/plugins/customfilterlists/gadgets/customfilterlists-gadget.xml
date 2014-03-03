@@ -33,6 +33,14 @@
         <![CDATA[
         #requireResource("com.atlassian.jira.gadgets:autocomplete")
         #includeResources()
+
+        <style type="text/css">
+            .view {
+                margin: 12px;
+                padding: 0.5em 1em 0.25em;
+            }
+        </style>
+
         <script type="text/javascript">
 
 AJS.Gadget({
@@ -185,15 +193,7 @@ AJS.Gadget({
             };
 
             var setSummary = (function() {
-                var customMessage = "";
-                if (args.filterdata.customMessage) {
-                    customMessage = args.filterdata.customMessage;
-                } else {
-                    customMessage = "__MSG_gadget.workloadtext.heading__";
-                }
-                getDataContainer().append(
-                        AJS.$("<h1/>").append(AJS.format(customMessage, "<strong>" + args.filterdata.timeSpent + "</strong>"))
-                );
+                getDataContainer().append(AJS.$("<div/>").html(args.filterdata.html));
             })();
         },
         args: [{

@@ -1,37 +1,56 @@
 package com.liatrio.atlas.plugins.gadgets;
 
 import java.io.IOException;
+import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.atlassian.crowd.embedded.api.User;
 import com.atlassian.jira.config.properties.ApplicationProperties;
+import com.atlassian.jira.issue.search.SearchException;
+import com.atlassian.jira.issue.search.SearchProvider;
+import com.atlassian.jira.issue.search.SearchRequest;
 import com.atlassian.jira.security.JiraAuthenticationContext;
 import com.atlassian.plugins.rest.common.security.AnonymousAllowed;
+import com.atlassian.templaterenderer.TemplateRenderer;
 import com.liatrio.atlas.plugins.structs.CustomFilterListsJson;
 
 @Path("customfilterlists")
 @AnonymousAllowed
 public class CustomFilterListsResource {
+    private static final String TEMPLATE = "com/liatrio/atlas/plugins/customfilterlists/templates/customfilterlist.vm";
+
     private final ApplicationProperties applicationProperties;
     private final JiraAuthenticationContext jiraAuthenticationContext;
+    private final SearchProvider searchProvider;
+    private final TemplateRenderer renderer;
 
     public CustomFilterListsResource(
             ApplicationProperties applicationProperties,
-            JiraAuthenticationContext jiraAuthenticationContext) {
+            JiraAuthenticationContext jiraAuthenticationContext,
+            SearchProvider searchProvider,
+            TemplateRenderer renderer) {
         this.applicationProperties = applicationProperties;
         this.jiraAuthenticationContext = jiraAuthenticationContext;
+        this.searchProvider = searchProvider;
+        this.renderer = renderer;
     }
 
     @GET
     @Path("generate")
     @Produces({MediaType.APPLICATION_JSON})
     public Response generate(
+            @Context HttpServletRequest request,
             @QueryParam("customTitle") String customTitle,
             @QueryParam("displayStyle") String displayStyle,
             @QueryParam("includeLinks") String includeLinks,
@@ -39,12 +58,28 @@ public class CustomFilterListsResource {
             @QueryParam("filterListFilter") String filterListFilter,
             @QueryParam("filterIDs") String filterIDs,
             @QueryParam("onlyFavourites") String onlyFavourites) throws IOException {
+        Map<String, Object> context = new HashMap<String, Object>();
+
+        boolean loggedIn = jiraAuthenticationContext.getLoggedInUser() != null;
+
+        context.put("loggedin", new Boolean(loggedIn));
+        context.put("ctxPath", request.getContextPath());
+
+        StringWriter writer = new StringWriter();
+        renderer.render(TEMPLATE, context, writer);
+
         CustomFilterListsJson json = new CustomFilterListsJson();
         json.setCustomTitle(customTitle);
+        json.setHtml(writer.toString());
 
         CacheControl cc = new CacheControl();
         cc.setNoCache(true);
         return Response.ok(json).cacheControl(cc).build();
+    }
+
+    public long getCountsForFilter(SearchRequest sr) throws SearchException {
+        User user = jiraAuthenticationContext.getLoggedInUser();
+        return this.searchProvider.searchCount(sr.getQuery(), user);
     }
 
     @GET
@@ -96,10 +131,8 @@ public class FilterListPortlet extends PortletImpl {
 
    private final PermissionManager permissionManager;
    private final ConstantsManager constantsManager;
-   private final SearchProvider searchProvider;
    private final ApplicationProperties applicationProperties;
    private final SearchRequestService searchRequestService;
-
 
    public FilterListPortlet(JiraAuthenticationContext authenticationContext, PermissionManager permissionManager, ConstantsManager constantsManager, SearchProvider searchProvider, ApplicationProperties applicationProperties, SearchRequestService searchRequestService) {
       super(authenticationContext);
@@ -111,10 +144,6 @@ public class FilterListPortlet extends PortletImpl {
    }
 
    protected Map getVelocityParams(PortletConfiguration portletConfiguration) {
-      HashMap params = new HashMap();
-      params.put("portlet", this);
-      params.put("portletId", portletConfiguration.getId());
-
       try {
          String oce = portletConfiguration.getProperty("filterlist-onlyfavourites");
          String filterRegexp = portletConfiguration.getProperty("filterlist-regexp");
@@ -125,13 +154,10 @@ public class FilterListPortlet extends PortletImpl {
          String filterIdsConf = portletConfiguration.getTextProperty("filterlist-ids");
          String[] filterIds = filterIdsConf.split("[, \n]");
          params.put("indexing", new Boolean(this.applicationProperties.getOption("jira.option.indexing")));
-         boolean loggedIn = this.authenticationContext.getUser() != null;
-         params.put("loggedin", new Boolean(loggedIn));
          String includeLinks = portletConfiguration.getProperty("filterlist-includelinks");
          params.put("includeLinks", new Boolean("true".equals(includeLinks)));
          String includeCounts = portletConfiguration.getProperty("filterlist-includecounts");
          params.put("includeCounts", new Boolean("true".equals(includeCounts)));
-         if(loggedIn) {
             User user = this.authenticationContext.getUser();
             Object filters = null;
             if("true".equals(oce)) {
@@ -185,11 +211,5 @@ public class FilterListPortlet extends PortletImpl {
 
       return params;
    }
-
-   public long getCountsForFilter(SearchRequest sr) throws SearchException {
-      User user = this.authenticationContext.getUser();
-      return this.searchProvider.searchCount(sr.getQuery(), user);
-   }
 }
-
 **/

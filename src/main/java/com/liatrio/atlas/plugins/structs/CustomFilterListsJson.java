@@ -6,7 +6,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class CustomFilterListsJson {
     @XmlElement
-    private String filterTitle;
+    private String html;
 
     @XmlElement
     private String customTitle;
@@ -14,8 +14,8 @@ public class CustomFilterListsJson {
     public CustomFilterListsJson() {
     }
 
-    public CustomFilterListsJson(String filterTitle, String customTitle) {
-        this.filterTitle = filterTitle;
+    public CustomFilterListsJson(String html, String customTitle) {
+        this.html = html;
         this.customTitle = customTitle;
     }
 
@@ -23,20 +23,20 @@ public class CustomFilterListsJson {
         return customTitle;
     }
 
-    public String getFilterTitle() {
-        return filterTitle;
+    public String getHtml() {
+        return html;
     }
 
     public void setCustomTitle(String customTitle) {
         this.customTitle = customTitle;
     }
 
-    public void setFilterTitle(String filterTitle) {
-        this.filterTitle = filterTitle;
+    public void setHtml(String html) {
+        this.html = html;
     }
 
     @Override
     public String toString() {
-        return "CustomFilterListsJson [filterTitle=" + filterTitle + ", customTitle=" + customTitle + "]";
+        return "CustomFilterListsJson[html=" + html + ", customTitle=" + customTitle + "]";
     }
 }
