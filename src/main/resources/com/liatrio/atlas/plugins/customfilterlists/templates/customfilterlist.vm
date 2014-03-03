@@ -1,69 +1,47 @@
 #if ($loggedin)
-<table class="tableBorder maxWidth" border="0" cellpadding="0" cellspacing="0" width="100%">
-    <tr>
-        <td>
-            <table border="0" cellpadding="3" cellspacing="1" width="100%">
-                <tr class="rowHeader">
-                    <td class="colHeaderLink" colspan="2">
-                        #if($includeLinks)
-                        <font size="1">
-                            (<a href="$ctxPath/secure/IssueNavigator.jspa?createNew=true&mode=show">$i18n.getText("customfilterlists.customfilterlistgadget.createnew")</a>
-                            |
-                            <a href="$ctxPath/secure/ManageFilters.jspa">$i18n.getText("customfilterlists.customfilterlistgadget.manage")</a>)
-                        </font>
-                        #end
-                    </td>
-                </tr>
-                #if($chosenFilters && $chosenFilters.size() > 0)
-                #if($displayAsList)
-                #foreach ($filter in $chosenFilters)
-                #set($filterURL = "$ctxPath/secure/IssueNavigator.jspa?mode=hide&requestId=$filter.id")
-                <tr #if($velocityCount % 2 == 1) class="rowNormal" #else class="rowAlternate" #end>
-                    <td>
-                        <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                            <tr>
-                                <td width="100%">
-                                    <a title="$renderer.encodeText($filter.name)#if($filter.description && $filter.description != '') - $renderer.encodeText($filter.description)#end" href="$filterURL">$renderer.encodeText($filter.name)</a>
-                                </td>
-                                <td>
-                                    #if($indexing)
-                                    #if($includeCounts)
-                                    <a href="$filterURL">$renderer.getCountsForFilter($filter)</a>
-                                    #end
-                                    #end
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-                #end
-                #else
-                <tr class="rowNormal">
-                    <td>
-                        <form action="$ctxPath/secure/IssueNavigator.jspa?mode=hide" name="dropdown-$portletId" onSubmit="if(document.forms['dropdown-$portletId'].requestId.selectedIndex == 0) { window.top.location.href='$ctxPath/secure/IssueNavigator.jspa?createNew=true&mode=show'; return false; }">
-                            <select name="requestId" onChange="dropdown=document.forms['dropdown-$portletId'].requestId; reqId=dropdown.options[dropdown.selectedIndex].value; if(reqId && reqId != '') window.top.location.href = '$ctxPath/secure/IssueNavigator.jspa?mode=hide&requestId=' + reqId;" taarget="_top">
-                                <option value="-1">$i18n.getText("customfilterlists.customfilterlistgadget.selecttext")</option>
-                                #foreach($filter in $chosenFilters)
-                                <option value="$filter.id">$renderer.encodeText($filter.name)#if($indexing)#if($includeCounts)[$renderer.getCountsForFilter($filter)]#end#end</option>
-                                #end
-                            </select>
-                            <input type="image" src="$ctxPath/download/resources/com.sourcelabs.jira.plugin.portlet.filterlist:filterlist/control_play.png"/>
-                        </form>
-                    </td>
-                </tr>
-                #end
-                #else
-                <tr>
-                    <td width="100%" colspan="2">
-                        $i18n.getText("customfilterlists.customfilterlistgadget.nofilters").
-                        <a href="$ctxPath/secure/IssueNavigator.jspa?mode=show&createNew=true">
-                            $i18n.getText("customfilterlists.customfilterlistgadget.createnewfilter")
-                        </a>.
-                    </td>
-                </tr>
-                #end
-            </table>
-        </td>
-    </tr>
-</table>
+    <div class="filter-list-content">
+    #if($chosenFilters && $chosenFilters.size() > 0)
+        #if($displayAsList)
+        #foreach ($filter in $chosenFilters)
+        #set($filterURL = "$ctxPath/secure/IssueNavigator.jspa?mode=hide&requestId=$filter.id")
+        <ul id="filter-list">
+            <li>
+                <a target="_parent" title="$renderer.encodeText($filter.name)#if($filter.description && $filter.description != '') - $renderer.encodeText($filter.description)#end" href="$filterURL">
+                    <span class="filter-name">$renderer.encodeText($filter.name)</span>
+                    <span class="filter-count">#if($indexing)#if($includeCounts)$renderer.getCountsForFilter($filter)#end#end</span>
+                </a>
+            </li>
+        </ul>
+        #end
+        #else
+        <div class="filter-list-content" style="margin-bottom: 5px;">
+            <form action="$ctxPath/secure/IssueNavigator.jspa?mode=hide" name="dropdown-$portletId" onSubmit="if(document.forms['dropdown-$portletId'].requestId.selectedIndex == 0) { window.top.location.href='$ctxPath/secure/IssueNavigator.jspa?createNew=true&mode=show'; return false; }">
+                <select name="requestId" onChange="dropdown=document.forms['dropdown-$portletId'].requestId; reqId=dropdown.options[dropdown.selectedIndex].value; if(reqId && reqId != '') window.top.location.href = '$ctxPath/secure/IssueNavigator.jspa?mode=hide&requestId=' + reqId;" taarget="_top">
+                    <option value="-1">$i18n.getText("customfilterlists.customfilterlistgadget.selecttext")</option>
+                    #foreach($filter in $chosenFilters)
+                    <option value="$filter.id">$renderer.encodeText($filter.name)#if($indexing)#if($includeCounts)[$renderer.getCountsForFilter($filter)]#end#end</option>
+                    #end
+                </select>
+            </form>
+        </div>
+        #end
+        #else
+        <p>
+        $i18n.getText("customfilterlists.customfilterlistgadget.nofilters").
+        <a href="$ctxPath/secure/IssueNavigator.jspa?mode=show&createNew=true">
+            $i18n.getText("customfilterlists.customfilterlistgadget.createnewfilter")
+        </a>.
+        </p>
+    #end
+    </div>
+    #if($includeLinks)
+    <div class="config-options">
+        <span class="primary">
+            <a href="$ctxPath/secure/IssueNavigator.jspa?createNew=true&mode=show" target="_parent">$i18n.getText("customfilterlists.customfilterlistgadget.createnew")</a>
+        </span>
+        <span class="secondary">
+            <a href="$ctxPath/secure/ManageFilters.jspa" target="_parent">$i18n.getText("customfilterlists.customfilterlistgadget.manage")</a>
+        </span>
+    </div>
+    #end
 #end

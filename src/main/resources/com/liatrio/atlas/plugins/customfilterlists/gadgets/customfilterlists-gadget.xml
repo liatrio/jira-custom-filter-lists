@@ -33,14 +33,6 @@
         <![CDATA[
         #requireResource("com.atlassian.jira.gadgets:autocomplete")
         #includeResources()
-
-        <style type="text/css">
-            .view {
-                margin: 12px;
-                padding: 0.5em 1em 0.25em;
-            }
-        </style>
-
         <script type="text/javascript">
 
 AJS.Gadget({
@@ -160,6 +152,7 @@ AJS.Gadget({
         template: function (args) {
             var gadget = this;
 
+            gadget.getView().addClass("g-favourite-filters");
             gadget.getView().empty();
 
             var requiresTitle = function() {
@@ -177,13 +170,6 @@ AJS.Gadget({
                 }
             }();
 
-            var getDataContainer = function () {
-                var filterdata = AJS.$("<div id='filterdata'/>").appendTo(gadget.getView());
-                return function () {
-                    return filterdata;
-                };
-            }();
-
             var safeEscapeString = function(text) {
                 if(text) {
                     return gadgets.util.escapeString(text);
@@ -193,7 +179,7 @@ AJS.Gadget({
             };
 
             var setSummary = (function() {
-                getDataContainer().append(AJS.$("<div/>").html(args.filterdata.html));
+                gadget.getView().append(AJS.$("<div/>").html(args.filterdata.html));
             })();
         },
         args: [{
