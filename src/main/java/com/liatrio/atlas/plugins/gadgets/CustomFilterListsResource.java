@@ -2,8 +2,11 @@ package com.liatrio.atlas.plugins.gadgets;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,6 +34,7 @@ import com.atlassian.jira.sharing.search.SharedEntitySearchResult;
 import com.atlassian.plugins.rest.common.security.AnonymousAllowed;
 import com.atlassian.templaterenderer.TemplateRenderer;
 import com.liatrio.atlas.plugins.structs.CustomFilterListsJson;
+import com.liatrio.atlas.plugins.util.Utils;
 
 @Path("customfilterlists")
 @AnonymousAllowed
@@ -84,12 +88,38 @@ public class CustomFilterListsResource {
             filters = searchResult.getResults();
         }
 
+        List<Long> ids = Utils.getFilterIds(filterIDs);
+        if(Utils.isNormal(ids) && Utils.isNormal(filters)) {
+            Map<Long, SearchRequest> filterMap = new HashMap<Long, SearchRequest>();
+            for (SearchRequest filter : filters) {
+                filterMap.put(filter.getId(), filter);
+            }
+            filters = new ArrayList<SearchRequest>();
+            for (Long id : ids) {
+                if (filterMap.containsKey(id)) {
+                    filters.add(filterMap.get(id));
+                }
+            }
+        }
+
+        if(Utils.isNormal(filterListFilter)) {
+            Iterator<SearchRequest> filterIter = filters.iterator();
+            while (filterIter.hasNext()) {
+                SearchRequest filter = filterIter.next();
+                if (!filter.getName().matches(filterListFilter)) {
+                    filterIter.remove();
+                }
+            }
+        }
+
         context.put("loggedin", new Boolean(loggedIn));
         context.put("ctxPath", request.getContextPath());
         context.put("includeLinks", Boolean.valueOf(includeLinks));
         context.put("includeCounts", Boolean.valueOf(includeCounts));
         context.put("indexing", new Boolean(applicationProperties.getOption("jira.option.indexing")));
         context.put("displayAsList", new Boolean(!"dropdown".equalsIgnoreCase(displayStyle)));
+        context.put("chosenFilters", filters);
+        context.put("renderer", new GadgetRenderer(currentUser, searchProvider));
 
         StringWriter writer = new StringWriter();
         renderer.render(TEMPLATE, context, writer);
@@ -126,55 +156,3 @@ public class CustomFilterListsResource {
         //return Response.status(HttpStatus.SC_BAD_REQUEST).entity(ErrorCollection.Builder.newBuilder(validationErrors).build()).cacheControl(CacheControl.NO_CACHE).build();
     }
 }
-
-/**
-   private final PermissionManager permissionManager;
-   private final ConstantsManager constantsManager;
-
-   protected Map getVelocityParams(PortletConfiguration portletConfiguration) {
-         String filterRegexp = portletConfiguration.getProperty("filterlist-regexp");
-         String filterIdsConf = portletConfiguration.getTextProperty("filterlist-ids");
-         String[] filterIds = filterIdsConf.split("[, \n]");
-
-            if(filterIds != null && filters != null && filterIds.length != 0 && (filterIds.length != 1 || !filterIds[0].equals(""))) {
-               HashMap var21 = new HashMap();
-               Iterator pse = ((Collection)filters).iterator();
-
-               String filterId;
-               while(pse.hasNext()) {
-                  SearchRequest i = (SearchRequest)pse.next();
-                  filterId = i.getId().toString();
-                  var21.put(filterId, i);
-               }
-
-               filters = new ArrayList();
-
-               for(int var23 = 0; var23 < filterIds.length; ++var23) {
-                  filterId = filterIds[var23];
-                  if(var21.containsKey(filterId)) {
-                     ((Collection)filters).add(var21.get(filterId));
-                  }
-               }
-            }
-
-            if(filterRegexp != null && !"".equals(filterRegexp)) {
-               Iterator var22 = ((Collection)filters).iterator();
-
-               try {
-                  while(var22.hasNext()) {
-                     SearchRequest var20 = (SearchRequest)var22.next();
-                     if(!var20.getName().matches(filterRegexp)) {
-                        var22.remove();
-                     }
-                  }
-               } catch (PatternSyntaxException var18) {
-                  params.put("regexWarning", var18.getMessage());
-               }
-            }
-
-            params.put("chosenFilters", filters);
-         }
-      } catch (ObjectConfigurationException var19) {
-         var19.printStackTrace();
-      }
-**/
