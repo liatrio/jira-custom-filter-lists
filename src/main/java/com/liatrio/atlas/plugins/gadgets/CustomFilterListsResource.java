@@ -2,6 +2,7 @@ package com.liatrio.atlas.plugins.gadgets;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,11 +17,17 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.atlassian.crowd.embedded.api.User;
+import com.atlassian.jira.bc.JiraServiceContextImpl;
+import com.atlassian.jira.bc.filter.SearchRequestService;
 import com.atlassian.jira.config.properties.ApplicationProperties;
 import com.atlassian.jira.issue.search.SearchException;
 import com.atlassian.jira.issue.search.SearchProvider;
 import com.atlassian.jira.issue.search.SearchRequest;
 import com.atlassian.jira.security.JiraAuthenticationContext;
+import com.atlassian.jira.sharing.SharedEntityColumn;
+import com.atlassian.jira.sharing.search.SharedEntitySearchParameters;
+import com.atlassian.jira.sharing.search.SharedEntitySearchParametersBuilder;
+import com.atlassian.jira.sharing.search.SharedEntitySearchResult;
 import com.atlassian.plugins.rest.common.security.AnonymousAllowed;
 import com.atlassian.templaterenderer.TemplateRenderer;
 import com.liatrio.atlas.plugins.structs.CustomFilterListsJson;
@@ -33,16 +40,19 @@ public class CustomFilterListsResource {
     private final ApplicationProperties applicationProperties;
     private final JiraAuthenticationContext jiraAuthenticationContext;
     private final SearchProvider searchProvider;
+    private final SearchRequestService searchRequestService;
     private final TemplateRenderer renderer;
 
     public CustomFilterListsResource(
             ApplicationProperties applicationProperties,
             JiraAuthenticationContext jiraAuthenticationContext,
             SearchProvider searchProvider,
+            SearchRequestService searchRequestService,
             TemplateRenderer renderer) {
         this.applicationProperties = applicationProperties;
         this.jiraAuthenticationContext = jiraAuthenticationContext;
         this.searchProvider = searchProvider;
+        this.searchRequestService = searchRequestService;
         this.renderer = renderer;
     }
 
@@ -60,10 +70,26 @@ public class CustomFilterListsResource {
             @QueryParam("onlyFavourites") String onlyFavourites) throws IOException {
         Map<String, Object> context = new HashMap<String, Object>();
 
-        boolean loggedIn = jiraAuthenticationContext.getLoggedInUser() != null;
+        User currentUser = jiraAuthenticationContext.getLoggedInUser();
+        boolean loggedIn = currentUser != null;
+
+        Collection<SearchRequest> filters = null;
+        if(Boolean.valueOf(onlyFavourites)) {
+            filters = searchRequestService.getFavouriteFilters(currentUser);
+        } else {
+            final SharedEntitySearchParametersBuilder searchParameters = new SharedEntitySearchParametersBuilder();
+            searchParameters.setSortColumn(SharedEntityColumn.FAVOURITE_COUNT, false);
+            SharedEntitySearchParameters params = searchParameters.toSearchParameters();
+            SharedEntitySearchResult<SearchRequest> searchResult = searchRequestService.search(new JiraServiceContextImpl(currentUser), params, 0, 400);
+            filters = searchResult.getResults();
+        }
 
         context.put("loggedin", new Boolean(loggedIn));
         context.put("ctxPath", request.getContextPath());
+        context.put("includeLinks", Boolean.valueOf(includeLinks));
+        context.put("includeCounts", Boolean.valueOf(includeCounts));
+        context.put("indexing", new Boolean(applicationProperties.getOption("jira.option.indexing")));
+        context.put("displayAsList", new Boolean(!"dropdown".equalsIgnoreCase(displayStyle)));
 
         StringWriter writer = new StringWriter();
         renderer.render(TEMPLATE, context, writer);
@@ -102,70 +128,13 @@ public class CustomFilterListsResource {
 }
 
 /**
-package com.sourcelabs.jira.plugin.portlet.filterlist;
-
-import com.atlassian.configurable.ObjectConfigurationException;
-import com.atlassian.jira.bc.JiraServiceContextImpl;
-import com.atlassian.jira.bc.filter.SearchRequestService;
-import com.atlassian.jira.config.ConstantsManager;
-import com.atlassian.jira.config.properties.ApplicationProperties;
-import com.atlassian.jira.issue.search.SearchException;
-import com.atlassian.jira.issue.search.SearchProvider;
-import com.atlassian.jira.issue.search.SearchRequest;
-import com.atlassian.jira.portal.PortletConfiguration;
-import com.atlassian.jira.portal.PortletImpl;
-import com.atlassian.jira.security.JiraAuthenticationContext;
-import com.atlassian.jira.security.PermissionManager;
-import com.atlassian.jira.sharing.search.SharedEntitySearchResult;
-import com.opensymphony.user.User;
-import com.sourcelabs.jira.plugin.portlet.filterlist.FilterListPortlet.1;
-import com.sourcelabs.jira.plugin.portlet.filterlist.FilterListPortlet.NullSharedEntitySearchParameters;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.regex.PatternSyntaxException;
-
-public class FilterListPortlet extends PortletImpl {
-
    private final PermissionManager permissionManager;
    private final ConstantsManager constantsManager;
-   private final ApplicationProperties applicationProperties;
-   private final SearchRequestService searchRequestService;
-
-   public FilterListPortlet(JiraAuthenticationContext authenticationContext, PermissionManager permissionManager, ConstantsManager constantsManager, SearchProvider searchProvider, ApplicationProperties applicationProperties, SearchRequestService searchRequestService) {
-      super(authenticationContext);
-      this.permissionManager = permissionManager;
-      this.constantsManager = constantsManager;
-      this.searchProvider = searchProvider;
-      this.applicationProperties = applicationProperties;
-      this.searchRequestService = searchRequestService;
-   }
 
    protected Map getVelocityParams(PortletConfiguration portletConfiguration) {
-      try {
-         String oce = portletConfiguration.getProperty("filterlist-onlyfavourites");
          String filterRegexp = portletConfiguration.getProperty("filterlist-regexp");
-         String filterDisplay = portletConfiguration.getProperty("filterlist-display");
-         params.put("displayAsList", new Boolean(!"dropdown".equalsIgnoreCase(filterDisplay)));
-         String filterTitle = portletConfiguration.getProperty("filterlist-title");
-         params.put("filterTitle", filterTitle);
          String filterIdsConf = portletConfiguration.getTextProperty("filterlist-ids");
          String[] filterIds = filterIdsConf.split("[, \n]");
-         params.put("indexing", new Boolean(this.applicationProperties.getOption("jira.option.indexing")));
-         String includeLinks = portletConfiguration.getProperty("filterlist-includelinks");
-         params.put("includeLinks", new Boolean("true".equals(includeLinks)));
-         String includeCounts = portletConfiguration.getProperty("filterlist-includecounts");
-         params.put("includeCounts", new Boolean("true".equals(includeCounts)));
-            User user = this.authenticationContext.getUser();
-            Object filters = null;
-            if("true".equals(oce)) {
-               filters = this.searchRequestService.getFavouriteFilters(user);
-            } else {
-               SharedEntitySearchResult iterator = this.searchRequestService.search(new JiraServiceContextImpl(user), new NullSharedEntitySearchParameters(this, (1)null), 0, 400);
-               filters = iterator.getResults();
-            }
 
             if(filterIds != null && filters != null && filterIds.length != 0 && (filterIds.length != 1 || !filterIds[0].equals(""))) {
                HashMap var21 = new HashMap();
@@ -208,8 +177,4 @@ public class FilterListPortlet extends PortletImpl {
       } catch (ObjectConfigurationException var19) {
          var19.printStackTrace();
       }
-
-      return params;
-   }
-}
 **/

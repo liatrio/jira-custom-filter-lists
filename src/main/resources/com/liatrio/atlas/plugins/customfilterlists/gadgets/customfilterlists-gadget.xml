@@ -93,11 +93,11 @@ AJS.Gadget({
                         options:[
                             {
                                 label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeLinks.yes"),
-                                value: "yes"
+                                value: "true"
                             },
                             {
                                 label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeLinks.no"),
-                                value: "no"
+                                value: "false"
                             }
                         ]
                     },
@@ -110,11 +110,11 @@ AJS.Gadget({
                         options:[
                             {
                                 label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeCounts.yes"),
-                                value: "yes"
+                                value: "true"
                             },
                             {
                                 label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeCounts.no"),
-                                value: "no"
+                                value: "false"
                             }
                         ]
                     },
@@ -141,11 +141,11 @@ AJS.Gadget({
                         options:[
                             {
                                 label: gadget.getMsg("customfilterlists.customfilterlistgadget.onlyFavourites.yes"),
-                                value: "yes"
+                                value: "true"
                             },
                             {
                                 label: gadget.getMsg("customfilterlists.customfilterlistgadget.onlyFavourites.no"),
-                                value: "no"
+                                value: "false"
                             }
                         ]
                     },
