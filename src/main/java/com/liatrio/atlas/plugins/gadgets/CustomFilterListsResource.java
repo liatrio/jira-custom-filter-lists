@@ -8,24 +8,28 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import org.apache.commons.httpclient.HttpStatus;
 
 import com.atlassian.crowd.embedded.api.User;
 import com.atlassian.jira.bc.JiraServiceContextImpl;
 import com.atlassian.jira.bc.filter.SearchRequestService;
 import com.atlassian.jira.config.properties.ApplicationProperties;
-import com.atlassian.jira.issue.search.SearchException;
 import com.atlassian.jira.issue.search.SearchProvider;
 import com.atlassian.jira.issue.search.SearchRequest;
+import com.atlassian.jira.rest.v1.model.errors.ErrorCollection;
+import com.atlassian.jira.rest.v1.model.errors.ValidationError;
+import com.atlassian.jira.rest.v1.util.CacheControl;
 import com.atlassian.jira.security.JiraAuthenticationContext;
 import com.atlassian.jira.sharing.SharedEntityColumn;
 import com.atlassian.jira.sharing.search.SharedEntitySearchParameters;
@@ -128,14 +132,7 @@ public class CustomFilterListsResource {
         json.setCustomTitle(customTitle);
         json.setHtml(writer.toString());
 
-        CacheControl cc = new CacheControl();
-        cc.setNoCache(true);
-        return Response.ok(json).cacheControl(cc).build();
-    }
-
-    public long getCountsForFilter(SearchRequest sr) throws SearchException {
-        User user = jiraAuthenticationContext.getLoggedInUser();
-        return this.searchProvider.searchCount(sr.getQuery(), user);
+        return Response.ok(json).cacheControl(CacheControl.NO_CACHE).build();
     }
 
     @GET
@@ -149,10 +146,21 @@ public class CustomFilterListsResource {
             @QueryParam("filterListFilter") String filterListFilter,
             @QueryParam("filterIDs") String filterIDs,
             @QueryParam("onlyFavourites") String onlyFavourites) {
-
-        CacheControl cc = new CacheControl();
-        cc.setNoCache(true);
-        return Response.ok().cacheControl(cc).build();
-        //return Response.status(HttpStatus.SC_BAD_REQUEST).entity(ErrorCollection.Builder.newBuilder(validationErrors).build()).cacheControl(CacheControl.NO_CACHE).build();
+        Collection<ValidationError> validationErrors = new ArrayList<ValidationError>();
+        if (Utils.isNormal(filterListFilter)) {
+            try {
+                Pattern.compile(filterListFilter);
+            } catch (Exception ex) {
+                validationErrors.add(new ValidationError("filterListFilter", "customfilterlists.customfilterlistgadget.filterListFilter.error"));
+                return Response.status(HttpStatus.SC_BAD_REQUEST).entity(ErrorCollection.Builder.newBuilder(validationErrors).build()).cacheControl(CacheControl.NO_CACHE).build();
+            }
+        }
+        try {
+            Utils.getFilterIds(filterIDs);
+        } catch (Exception ex) {
+            validationErrors.add(new ValidationError("filterIDs", "customfilterlists.customfilterlistgadget.filterIDs.error"));
+            return Response.status(HttpStatus.SC_BAD_REQUEST).entity(ErrorCollection.Builder.newBuilder(validationErrors).build()).cacheControl(CacheControl.NO_CACHE).build();
+        }
+        return Response.ok().cacheControl(CacheControl.NO_CACHE).build();
     }
 }

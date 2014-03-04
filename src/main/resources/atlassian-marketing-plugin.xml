@@ -1,10 +1,9 @@
 <atlassian-plugin-marketing>
     <compatibility>
-        <product name="jira" min="5.2-rc1" max="6.0.8"/>
-        <!--<product name="jira" min="5.0" max="5.1.8"/>-->
+        <product name="jira" min="5.0" max="6.2"/>
     </compatibility>
     <logo image="images/http.png"/>
-    <banner image="images/banner_1.jpg"/>
+    <banner image="com/liatrio/atlas/plugins/customfilterlists/images/cfl128.png"/>
     <highlights>
         <highlight image="images/v00.png" cropped="images/v00.png"/>
         <highlight image="images/v66.png" cropped="images/v66.png"/>

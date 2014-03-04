@@ -3,8 +3,8 @@
     <ModulePrefs title="__MSG_customfilterlists.customfilterlistgadget.name__" directory_title="__MSG_customfilterlists.customfilterlistgadget.name__" description="__MSG_customfilterlists.customfilterlistgadget.descr__"
                  author="AM Works" author_affiliation="AM Works"
                  author_location="Moscow, Russia" height="300"
-                 screenshot='#staticResourceUrl("com.liatrio.atlas.plugins.customfilterlists:customfilterlists-gadget", "spenttime-pie.png")'
-                 thumbnail='#staticResourceUrl("com.liatrio.atlas.plugins.customfilterlists:customfilterlists-gadget", "spenttime-pie-thumb.png")'>
+                 screenshot='#staticResourceUrl("com.liatrio.atlas.plugins.customfilterlists:customfilterlists-gadget", "customfilterlist.png")'
+                 thumbnail='#staticResourceUrl("com.liatrio.atlas.plugins.customfilterlists:customfilterlists-gadget", "customfilterlist-thumb.png")'>
         <Optional feature="gadget-directory">
             <Param name="categories">
                 JIRA
