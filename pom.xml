@@ -13,12 +13,12 @@
         <url>http://ru.linkedin.com/in/andreymarkelov</url>
     </organization>
 
-    <name>customfilterlists</name>
+    <name>Custom Filter Lists</name>
     <description>This is the com.liatrio.atlas.plugins:customfilterlists plugin for Atlassian JIRA.</description>
     <packaging>atlassian-plugin</packaging>
 
     <dependencies>
-        <!--<dependency>
+        <dependency>
             <groupId>com.atlassian.jira</groupId>
             <artifactId>atlassian-jira</artifactId>
             <version>${jira.version}</version>
@@ -29,13 +29,13 @@
             <artifactId>jira-api</artifactId>
             <version>${jira.version}</version>
             <scope>provided</scope>
-        </dependency>-->
-        <dependency>
+        </dependency>
+        <!--<dependency>
             <groupId>com.atlassian.jira</groupId>
             <artifactId>jira-core</artifactId>
             <version>${jira.version}</version>
             <scope>provided</scope>
-        </dependency>
+        </dependency>-->
 
         <dependency>
             <groupId>javax.ws.rs</groupId>
@@ -122,9 +122,10 @@
     </build>
 
     <properties>
-        <jira.version>6.1-OD-07</jira.version>
+        <!--<jira.version>6.1-OD-07</jira.version>-->
+        <!--<jira.version>6.2-OD-07-027</jira.version>-->
         <jira.rest.version>5.0</jira.rest.version>
-        <!--<jira.version>5.2.8</jira.version>-->
+        <jira.version>5.0</jira.version>
         <amps.version>4.1.2</amps.version>
         <useFastdevCli>false</useFastdevCli>
     </properties>
