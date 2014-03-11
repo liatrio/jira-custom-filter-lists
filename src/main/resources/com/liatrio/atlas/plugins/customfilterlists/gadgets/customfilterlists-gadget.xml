@@ -31,7 +31,7 @@
     <UserPref name="onlyFavourites" datatype="hidden"/>
     <Content type="html" view="profile,canvas,home">
         <![CDATA[
-        #requireResource("com.atlassian.jira.gadgets:autocomplete")
+        #requireResource("com.liatrio.atlas.plugins.customfilterlists:customfilterlists-resources")
         #includeResources()
         <script type="text/javascript">
 
@@ -41,6 +41,19 @@ AJS.Gadget({
     config: {
         descriptor: function (args) {
             var gadget = this;
+
+            var searchParam;
+            if (/^jql-/.test(this.getPref("projectOrFilterId")) || this.getPref("isPopup") === "true"){
+                searchParam =
+                    {
+                        userpref: "projectOrFilterId",
+                        type: "hidden",
+                        value: gadgets.util.unescapeString(gadget.getPref("projectOrFilterId"))
+                    };
+            }
+            else{
+                searchParam = AJS.projectOrFilterPicker(gadget,"projectOrFilterId");
+            }
 
             return  {
                 action: "/rest/liatrio-customfilterlists/1.0/customfilterlists/config/validate",
@@ -52,6 +65,10 @@ AJS.Gadget({
                     }
                 }(),
                 fields: [
+                    jQuery.extend(true, {}, searchParam, {
+                        label: gadget.getMsg("gadget.workloadtext.field.project.or.filter.name"),
+                        description: gadget.getMsg("gadget.workloadtext.field.project.or.filter.description")
+                    }),
                     {
                         userpref: "customTitle",
                         label: gadget.getMsg("customfilterlists.customfilterlistgadget.customTitle"),

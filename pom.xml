@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.liatrio.atlas.plugins</groupId>
     <artifactId>customfilterlists</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
 
     <organization>
         <name>AM Works</name>
