@@ -178,3 +178,411 @@ AJS.autoFilters = function(options) {
 
     return that;
 };
+
+function columnGadgetFieldType1 (gadget, name, availableColumns)
+{
+    var dataModel = new FilterResultsColumnData1 (availableColumns, gadget.getPref(name));
+    var columnPicker = new ColumnPicker1 (name, dataModel);
+
+    AJS.$(document).bind("column-data-item-selected", function () {
+        gadget.resize();
+    });
+    AJS.$(document).bind("column-data-item-unselected", function () {
+        gadget.resize();
+    });
+
+    return {
+        id: "columnNames",
+        label: AJS.I18n.getText("gadget.issuetable.common.fields.to.display"),
+        type: "callbackBuilder",
+        callback: function(parentDiv) {
+            columnPicker.initalize(parentDiv);
+        }
+    };
+};
+
+function ColumnPicker1 (fieldName, dataModel) {
+    this.fieldName = fieldName;
+    this.dataModel = dataModel;
+
+    /* This is the function that inserts the column picker control into the gadget's edit panel */
+    this.initalize = function (parentDiv) {
+        var tableElement = AJS.$("<table/>").attr ({
+            id: "column-picker-restful-table"
+        }).appendTo(parentDiv);
+        var tableHelpTextElement = AJS.$("<div/>").attr ({
+            id: "column-picker-table-helpText",
+            'class': "description"
+        }).appendTo(parentDiv);
+
+        AJS.$("<p/>").appendTo(parentDiv);
+
+        // Populate the select element before adding it to the DOM for better performance
+        var selectElement = AJS.$("<select/>").attr ({
+            id: "column-picker-select",
+            'class': "column-picker-select"
+        });
+        var addButton = AJS.$("<input/>").attr ({
+            id: "column-picker-add",
+            type: "button",
+            value: AJS.I18n.getText("common.forms.add"),
+            'class': "button"
+        });
+
+        createSelectElement (selectElement, addButton, dataModel);
+        var selectWrapper = AJS.$("<span></span>").addClass("column-picker-select-wrapper").appendTo(parentDiv);
+        selectElement.appendTo(selectWrapper);
+        addButton.appendTo(selectWrapper);
+
+        var selectHelpTextElement = AJS.$("<div/>").attr ({
+            id: "column-picker-select-helpText",
+            'class': "description"
+        }).appendTo(parentDiv);
+        var submitElement = AJS.$("<div/>").attr ({
+            id: "column-picker-hidden-submit",
+            'class': "hidden"
+        }).appendTo(parentDiv);
+
+
+        createRestfulTable(tableElement,
+                [{
+                    id: "label",
+                    header: "Name",
+                    allowEdit: false
+                }],
+                this.dataModel.getSelectedColumns()
+        );
+        createSubmitElement (submitElement, fieldName, dataModel);
+        createHelpText (tableHelpTextElement, selectHelpTextElement);
+    };
+
+    function createRestfulTable(table, columns, entries) {
+        var reorderable = function (rowClass) {
+            return rowClass.extend({
+                initialize: function (options) {
+                    rowClass.prototype.initialize.call(this, AJS.$.extend({}, options, { allowReorder:true }));
+                }
+            })
+        };
+
+        var restyled = function (rowClass) {
+            //noinspection JSUnusedGlobalSymbols
+            return rowClass.extend({
+                renderOperations: function () {
+                    var instance = this;
+                    return AJS.$('<a id="column-picker-delete-' + AJS.escapeHtml(instance.model.attributes.value) + '" title="' + AJS.I18n.getText("gadget.issuetable.common.column.delete")
+                            + '"><span>" + AJS.I18n.getText("gadget.issuetable.common.column.delete") + "</span></a>')
+                        .addClass(this.classNames.DELETE)
+                        .addClass("icon-delete")
+                        .addClass("icon")
+                        .click(function () {
+                            instance.destroy();
+                        });
+                    },
+                events: {
+                    "click .aui-restfultable-editable" : "edit",
+                    "mouseover" : 'handleMouseOver',
+                    "mouseout" : 'handleMouseOut'
+                },
+                /* These should ideally be handled in CSS but IE8 and IE9 are not respecting the :hover state */
+                handleMouseOver: function (ev) {
+                     AJS.$(this.el.children).each( function () { this.bgColor = "#f0f0f0"; } );
+                },
+                handleMouseOut: function (ev) {
+                     AJS.$(this.el.children).each( function () { this.bgColor = ""; } );
+                }
+            });
+        };
+
+        var makeSortable = function (instance) {
+            // This is straight copied and pasted from restfultable.js,
+            // but modified to avoid making an AJAX call
+            // TODO: file an issue to make this pluggable
+
+            // Add allowance for another cell to the thead
+            instance.$theadRow.prepend("<th />");
+
+            // Allow drag and drop reordering of rows
+            instance.$tbody.sortable({
+                handle: "." + instance.classNames.DRAG_HANDLE,
+                helper: function(e, elt) {
+                    var helper =  elt.clone(true).addClass(instance.classNames.MOVEABLE);
+                    helper.children().each(function (i) {
+                        AJS.$(this).width(elt.children().eq(i).width());
+                    });
+                    return helper;
+                },
+                start: function (event, ui) {
+                    var $this = ui.placeholder.find("td");
+                    // Make sure that when we start dragging widths do not change
+                    ui.item
+                            .addClass(instance.classNames.MOVEABLE)
+                            .children().each(function (i) {
+                                AJS.$(this).width($this.eq(i).width());
+                            });
+
+                    // Add a <td> to the placeholder <tr> to inherit CSS styles.
+                    ui.placeholder
+                            .html('<td colspan="' + instance.getColumnCount() + '">&nbsp;</td>')
+                            .css("visibility", "visible");
+
+                    // Stop hover effects etc from occuring as we move the mouse (while dragging) over other rows
+                    instance.getRowFromElement(ui.item[0]).trigger(instance._events.MODAL);
+                },
+                stop: function (event, ui) {
+                    ui.item
+                            .removeClass(instance.classNames.MOVEABLE)
+                            .children().attr("style", "");
+
+                    ui.placeholder.removeClass(instance.classNames.ROW);
+
+                    // Return table to a normal state
+                    instance.getRowFromElement(ui.item[0]).trigger(instance._events.MODELESS);
+                },
+                update: function (event, ui) {
+                    var row = instance.getRowFromElement(ui.item[0]);
+
+                    if (row) {
+                        AJS.triggerEvtForInst(instance._events.REORDER_SUCCESS, instance, []);
+                    }
+                },
+                axis: "y",
+                delay: 0,
+                containment: "document",
+                cursor: "move",
+                scroll: true,
+                zIndex: 8000
+            });
+
+            // Prevent text selection while reordering.
+            instance.$tbody.bind("selectstart mousedown", function (event) {
+                return !AJS.$(event.target).is("." + instance.classNames.DRAG_HANDLE);
+            });
+        };
+
+        var restfulTable = new AJS.RestfulTable({
+            el: table,
+            allowCreate: false,
+            allowReorder: false, // NOTE: this is overridden at the row level via the "reorderable" decorator
+            columns: columns,
+            resources: {
+                all: function (populate) {
+                    populate(entries);
+                }
+            },
+            model: Backbone.Model.extend({
+                sync: function (method, model, success) {
+                    success(model.toJSON());
+                }
+            }),
+            views:{
+                row: restyled(reorderable(AJS.RestfulTable.Row)),
+                editRow: reorderable(AJS.RestfulTable.EditRow)
+            }
+        });
+        makeSortable(restfulTable);
+        restfulTable.isRefreshingTable = false;
+
+        // Events triggered when new fields are added or removed from the table
+        AJS.$(document).bind("column-data-item-selected", refreshTableData);
+        AJS.$(document).bind("column-data-item-unselected", refreshTableData);
+
+        function refreshTableData (document, data) {
+            restfulTable.isRefreshingTable = true;
+            AJS.$(restfulTable.getRows()).each(function () {
+                restfulTable.removeRow(this);
+            });
+            restfulTable.populate(data.dataModel.getSelectedColumns());
+            restfulTable.isRefreshingTable = false;
+        }
+
+        // Event triggered when items are reordered in the table.
+        AJS.$(restfulTable).bind(AJS.RestfulTable.Events.REORDER_SUCCESS, function (event) {
+            var selectedColumns = [];
+            AJS.$(event.target.getRows()).each(function () {
+                selectedColumns.push(
+                        {
+                            label: this.model.attributes.label,
+                            value: this.model.attributes.value
+                        });
+            });
+            dataModel.reorderSelectedColumns(selectedColumns);
+        });
+
+        // Event triggered when items are removed from the table.
+        AJS.$(restfulTable).bind(AJS.RestfulTable.Events.ROW_REMOVED, function (event, row) {
+            // Don't update the data model if we're processing a change triggered by a change in the data model
+            if (!restfulTable.isRefreshingTable) {
+                dataModel.unselectColumn(row.model.attributes.value);
+            }
+        });
+    }
+
+    function createSelectElement (selectElement, addButton, dataModel) {
+        populateSelectData (selectElement, dataModel);
+
+        // Notify the data model when an item is selected, by clicking the button or pressing ENTER on the list
+        addButton.click(addSelectedItem);
+        selectElement.keyup(function (event) {
+            if (event.which == 13) {
+                addSelectedItem();
+            }
+        })
+
+        function addSelectedItem() {
+            var newValue = selectElement.val();
+            if (newValue != null && newValue != "") {
+                dataModel.selectColumn(newValue);
+            }
+        }
+
+        // Event triggered when a field is selected, and should disappear from this list.
+        AJS.$(document).bind("column-data-item-selected", function (document, data) {
+            selectElement.children("[value=" + data.column.value + "]").remove();
+        });
+
+        // Event triggered when a field is unselected, and should reappear in this list in the right place.
+        AJS.$(document).bind("column-data-item-unselected", function (document, data) {
+            selectElement.children(":eq(" + data.index + ")").after(
+                AJS.$("<option>").attr("value", data.column.value).text(data.column.label));
+        });
+    }
+
+    function populateSelectData (selectElement, dataModel) {
+        var unselectedColumns = dataModel.getUnselectedColumns();
+        var fields = [];
+        selectElement.append(AJS.$("<option></option>",
+                { value: "",
+                  text: AJS.I18n.getText("gadget.issuetable.common.column.picker.prompt") }));
+        AJS.$(unselectedColumns).each(function () {
+            fields.push('<option value="'+AJS.escapeHtml(this.value)+'">'+AJS.escapeHtml(this.label)+'</option>');
+        });
+        selectElement.append(AJS.$(fields.join("")));
+    }
+
+    // This is a set of hidden fields that provides the value submitted back to the server when "Save" is clicked.
+    function createSubmitElement (submitElement, fieldName, dataModel) {
+        synchronizeSubmitData (submitElement, fieldName, dataModel);
+
+        // An item has been selected, add it to the end of the list.
+        AJS.$(document).bind("column-data-item-selected", function (document, data) {
+            submitElement.append(
+                    AJS.$("<input>").attr("type", "hidden").attr("name", fieldName).attr("value", data.column.value));
+        });
+
+        // An item has been unselected, remove it from the list.
+        AJS.$(document).bind("column-data-item-unselected", function (document, data) {
+            submitElement.children("[value=" + data.column.value + "]").remove();
+        });
+
+        // The items have been reordered, re-generate the list.
+        AJS.$(document).bind("column-data-reordered", function (document, data) {
+            synchronizeSubmitData (submitElement, fieldName, data.dataModel);
+        });
+    }
+
+    function synchronizeSubmitData (submitElement, fieldName, dataModel) {
+        submitElement.empty();
+        AJS.$.each(dataModel.getSelectedColumns(), function () {
+           submitElement.append(AJS.$("<input>").attr("type", "hidden").attr("name", fieldName).attr("value", this.value));
+        });
+    }
+
+    function createHelpText (tableHelpTextElement, selectHelpTextElement) {
+        tableHelpTextElement.text(AJS.I18n.getText("gadget.issuetable.common.column.reorder.instructions"));
+        selectHelpTextElement.text(AJS.I18n.getText("gadget.issuetable.common.column.picker.instructions"));
+    }
+}
+
+function FilterResultsColumnData1 (allColumns, currentConfig) {
+    this.selectedColumns = [];
+    this.allColumns = [];
+
+    // Separate out the columns that are selected from the full list
+    this.populateColumns = function (allColumns, currentConfig) {
+        this.allColumns = allColumns;
+        // Support data generated before column reordering was possible
+        currentConfig = currentConfig.replace("--Default--", "issuetype|issuekey|priority|summary");
+        var configuredColumns = currentConfig.split("|");
+
+        this.populateSelectedColumns(configuredColumns, allColumns);
+    };
+
+    this.populateSelectedColumns = function (configuredColumns, allColumns) {
+        var selectedColumns = this.selectedColumns;
+        var findColumnIndex = this.findColumnIndex;
+        AJS.$(configuredColumns).each(function () {
+            var configuredColumn = this;
+            var i = findColumnIndex(configuredColumn, allColumns);
+            if (i != -1) {
+                // If the user had the configuration set to --Default--|issuetype,
+                // they would end up with two issuetypes in the selected list, and things break.
+                // De-dupe them here and only keep the first, as only the first was shown in the table historically.
+                if (findColumnIndex(configuredColumn, selectedColumns) == -1) {
+                    selectedColumns.push(allColumns[i]);
+                }
+            }
+        });
+    }
+
+    this.getSelectedColumns = function () {
+        return this.selectedColumns;
+    }
+
+    this.getUnselectedColumns = function () {
+        // This array needs to stay in the original order given by the server.
+        // If we persist this array, we would lose the order of its items every time
+        // an element moves to the other array and back.
+        var unselectedColumns = [];
+        var findColumnIndex = this.findColumnIndex;
+        var selectedColumns = this.selectedColumns;
+        AJS.$(allColumns).each(function () {
+            if (findColumnIndex(this.value, selectedColumns) == -1) {
+                unselectedColumns.push(this);
+            }
+        });
+        return unselectedColumns;
+    }
+
+    this.findColumnIndex = function (value, array) {
+        for (var i = 0; i < array.length; i++) {
+            if (value == array[i].value) {
+                return i
+            }
+        }
+        return -1;
+    }
+
+    this.selectColumn = function (columnId) {
+        // Check it's not already selected (it shouldn't be)
+        var selectedIndex = this.findColumnIndex (columnId, this.selectedColumns);
+        if (selectedIndex == -1) {
+            var allIndex = this.findColumnIndex (columnId, this.allColumns);
+            if (allIndex != -1) {
+                var column = allColumns[allIndex];
+                this.selectedColumns.push(column);
+                AJS.$(document).trigger("column-data-item-selected",
+                        { dataModel : this, column : allColumns[allIndex]});
+            }
+        }
+
+    }
+
+    this.unselectColumn = function (columnId) {
+        var selectedIndex = this.findColumnIndex (columnId, this.selectedColumns);
+        if (selectedIndex != -1) {
+            this.selectedColumns.splice(selectedIndex, 1);
+            var unselectedColumns = this.getUnselectedColumns();
+            var newIndex = this.findColumnIndex (columnId, unselectedColumns);
+            AJS.$(document).trigger("column-data-item-unselected",
+                    { dataModel : this, column : unselectedColumns[newIndex], index : newIndex});
+        }
+    }
+
+    this.reorderSelectedColumns = function (newOrder) {
+        this.selectedColumns = newOrder;
+        AJS.$(document).trigger("column-data-reordered", { dataModel : this });
+    }
+
+    this.populateColumns (allColumns, currentConfig);
+}

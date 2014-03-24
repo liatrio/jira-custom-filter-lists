@@ -16,7 +16,9 @@
     <web-resource key="customfilterlists-resources" name="Custom Filter Lists Web Resources">
         <dependency>com.atlassian.auiplugin:ajs</dependency>
         <dependency>com.atlassian.jira.gadgets:common</dependency>
+        <dependency>com.atlassian.auiplugin:aui-experimental-restfultable</dependency>
         <dependency>jira.webresources:autocomplete</dependency>
+        <resource type="download" name="customfilterlists.css" location="com/liatrio/atlas/plugins/customfilterlists/css/customfilterlists.css"/>
         <resource type="download" name="customfilterlists.js" location="com/liatrio/atlas/plugins/customfilterlists/js/customfilterlists.js"/>
     </web-resource>
 

@@ -69,6 +69,7 @@ AJS.Gadget({
                         label: gadget.getMsg("gadget.workloadtext.field.project.or.filter.name"),
                         description: gadget.getMsg("gadget.workloadtext.field.project.or.filter.description")
                     }),
+                    columnGadgetFieldType1(gadget, "columnNames", args.columnChoices.availableColumns),
                     {
                         userpref: "customTitle",
                         label: gadget.getMsg("customfilterlists.customfilterlistgadget.customTitle"),
@@ -161,7 +162,12 @@ AJS.Gadget({
                     AJS.gadget.fields.nowConfigured()
                 ]
             };
-        }
+        },
+        args: [{
+                                key: "columnChoices",
+                                ajaxOptions:  "/rest/gadget/1.0/availableColumns"
+                            },
+                        ]
     },
     view: {
         enableReload: true,
