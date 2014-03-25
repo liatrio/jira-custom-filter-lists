@@ -1,7 +1,10 @@
-AJS.projectOrFilterPicker = function(gadget, userpref){
+AJS.projectOrFilterPicker = function(gadget, userpref, availableColumns){
     if (!gadget.projectOrFilterName){
         gadget.projectOrFilterName = gadget.getMsg("gadget.common.filterid.none.selected");
     }
+
+    var dataModel = new FilterResultsColumnData1 (availableColumns, gadget.getPref(name));
+    var columnPicker = new ColumnPicker1 (name, dataModel);
 
     return {
         userpref: userpref,
@@ -9,7 +12,7 @@ AJS.projectOrFilterPicker = function(gadget, userpref){
         description:gadget.getMsg("gadget.common.filterid.description"),
         id: "proj_filter_picker_" + userpref,
         type: "callbackBuilder",
-        callback: function(parentDiv){
+        callback: function(parentDiv) {
             parentDiv.append(
                 AJS.$("<input/>").attr({
                     id: "filter_" + userpref + "_id",
@@ -19,6 +22,13 @@ AJS.projectOrFilterPicker = function(gadget, userpref){
             ).append(
                 AJS.$("<span/>").attr({id:"filter_" + userpref + "_name"}).addClass("filterpicker-value-name field-value").text(gadget.projectOrFilterName)
             );
+
+            AJS.$("#filter_" + userpref + "_name").bind("DOMSubtreeModified", function() {
+                var d1 = AJS.$("#filter_" + userpref + "_id").val();
+                var d2 = AJS.$("#filter_" + userpref + "_name").text();
+                dataModel.selectColumn("created");
+            });
+
             parentDiv.append(
                 AJS.$("<div/>").attr("id", "quickfind-container").append(
                     AJS.$("<label/>").addClass("overlabel").attr({
@@ -48,11 +58,14 @@ AJS.projectOrFilterPicker = function(gadget, userpref){
                 );
             }
 
+            AJS.$("<p/>").appendTo(parentDiv);
+            columnPicker.initalize(parentDiv);
 
             AJS.gadget.fields.applyOverLabel("quickfind-label");
             AJS.autoFilters({
                 fieldID: "quickfind",
                 ajaxData: {},
+                dataModel: dataModel,
                 baseUrl: jQuery.ajaxSettings.baseUrl,
                 relatedId: "filter_" + userpref + "_id",
                 relatedDisplayId: "filter_" + userpref + "_name",
@@ -97,7 +110,7 @@ AJS.autoFilters = function(options) {
 
     that.completeField = function(value) {
         AJS.$("#" + options.relatedId).val(value.id);
-        AJS.$("#" + options.relatedDisplayId).addClass("success").text(value.name);
+        AJS.$("#" + options.relatedDisplayId).addClass("success").text(value.name).change();
         AJS.$("#" + options.fieldID).val("");
     };
 
@@ -179,28 +192,6 @@ AJS.autoFilters = function(options) {
     return that;
 };
 
-function columnGadgetFieldType1 (gadget, name, availableColumns)
-{
-    var dataModel = new FilterResultsColumnData1 (availableColumns, gadget.getPref(name));
-    var columnPicker = new ColumnPicker1 (name, dataModel);
-
-    AJS.$(document).bind("column-data-item-selected", function () {
-        gadget.resize();
-    });
-    AJS.$(document).bind("column-data-item-unselected", function () {
-        gadget.resize();
-    });
-
-    return {
-        id: "columnNames",
-        label: AJS.I18n.getText("gadget.issuetable.common.fields.to.display"),
-        type: "callbackBuilder",
-        callback: function(parentDiv) {
-            columnPicker.initalize(parentDiv);
-        }
-    };
-};
-
 function ColumnPicker1 (fieldName, dataModel) {
     this.fieldName = fieldName;
     this.dataModel = dataModel;
@@ -215,34 +206,10 @@ function ColumnPicker1 (fieldName, dataModel) {
             'class': "description"
         }).appendTo(parentDiv);
 
-        AJS.$("<p/>").appendTo(parentDiv);
-
-        // Populate the select element before adding it to the DOM for better performance
-        var selectElement = AJS.$("<select/>").attr ({
-            id: "column-picker-select",
-            'class': "column-picker-select"
-        });
-        var addButton = AJS.$("<input/>").attr ({
-            id: "column-picker-add",
-            type: "button",
-            value: AJS.I18n.getText("common.forms.add"),
-            'class': "button"
-        });
-
-        createSelectElement (selectElement, addButton, dataModel);
-        var selectWrapper = AJS.$("<span></span>").addClass("column-picker-select-wrapper").appendTo(parentDiv);
-        selectElement.appendTo(selectWrapper);
-        addButton.appendTo(selectWrapper);
-
-        var selectHelpTextElement = AJS.$("<div/>").attr ({
-            id: "column-picker-select-helpText",
-            'class': "description"
-        }).appendTo(parentDiv);
         var submitElement = AJS.$("<div/>").attr ({
             id: "column-picker-hidden-submit",
             'class': "hidden"
         }).appendTo(parentDiv);
-
 
         createRestfulTable(tableElement,
                 [{
@@ -253,7 +220,7 @@ function ColumnPicker1 (fieldName, dataModel) {
                 this.dataModel.getSelectedColumns()
         );
         createSubmitElement (submitElement, fieldName, dataModel);
-        createHelpText (tableHelpTextElement, selectHelpTextElement);
+        createHelpText (tableHelpTextElement);
     };
 
     function createRestfulTable(table, columns, entries) {
@@ -432,6 +399,7 @@ function ColumnPicker1 (fieldName, dataModel) {
         function addSelectedItem() {
             var newValue = selectElement.val();
             if (newValue != null && newValue != "") {
+                alert(newValue);
                 dataModel.selectColumn(newValue);
             }
         }
@@ -488,9 +456,8 @@ function ColumnPicker1 (fieldName, dataModel) {
         });
     }
 
-    function createHelpText (tableHelpTextElement, selectHelpTextElement) {
+    function createHelpText (tableHelpTextElement) {
         tableHelpTextElement.text(AJS.I18n.getText("gadget.issuetable.common.column.reorder.instructions"));
-        selectHelpTextElement.text(AJS.I18n.getText("gadget.issuetable.common.column.picker.instructions"));
     }
 }
 
@@ -565,7 +532,6 @@ function FilterResultsColumnData1 (allColumns, currentConfig) {
                         { dataModel : this, column : allColumns[allIndex]});
             }
         }
-
     }
 
     this.unselectColumn = function (columnId) {

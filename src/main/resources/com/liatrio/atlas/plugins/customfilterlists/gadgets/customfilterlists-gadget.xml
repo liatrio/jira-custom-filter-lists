@@ -52,7 +52,7 @@ AJS.Gadget({
                     };
             }
             else{
-                searchParam = AJS.projectOrFilterPicker(gadget,"projectOrFilterId");
+                searchParam = AJS.projectOrFilterPicker(gadget,"projectOrFilterId", args.columnChoices.availableColumns);
             }
 
             return  {
@@ -66,10 +66,9 @@ AJS.Gadget({
                 }(),
                 fields: [
                     jQuery.extend(true, {}, searchParam, {
-                        label: gadget.getMsg("gadget.workloadtext.field.project.or.filter.name"),
-                        description: gadget.getMsg("gadget.workloadtext.field.project.or.filter.description")
+                        label: gadget.getMsg("customfilterlists.customfilterlistgadget.filterList"),
+                        description: gadget.getMsg("customfilterlists.customfilterlistgadget.filterList.descr")
                     }),
-                    columnGadgetFieldType1(gadget, "columnNames", args.columnChoices.availableColumns),
                     {
                         userpref: "customTitle",
                         label: gadget.getMsg("customfilterlists.customfilterlistgadget.customTitle"),
