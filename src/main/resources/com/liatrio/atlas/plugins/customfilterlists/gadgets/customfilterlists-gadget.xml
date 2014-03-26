@@ -22,6 +22,8 @@
     <UserPref name="isConfigured" datatype="hidden" default_value="false"/>
     <UserPref name="isPopup" datatype="hidden" default_value="false"/>
     <UserPref name="refresh" datatype="hidden" default_value="false"/>
+    <UserPref name="columnNames" datatype="hidden" default_value="--Default--"/>
+    <UserPref name="projectOrFilterId" datatype="hidden" default_value="--Default--"/>
     <UserPref name="customTitle" datatype="hidden"/>
     <UserPref name="displayStyle" datatype="hidden"/>
     <UserPref name="includeLinks" datatype="hidden" />
@@ -52,7 +54,7 @@ AJS.Gadget({
                     };
             }
             else{
-                searchParam = AJS.projectOrFilterPicker(gadget,"projectOrFilterId", args.columnChoices.availableColumns);
+                searchParam = AJS.projectOrFilterPicker(gadget,"projectOrFilterId", args.columnChoices.filter);
             }
 
             return  {
@@ -164,7 +166,7 @@ AJS.Gadget({
         },
         args: [{
                                 key: "columnChoices",
-                                ajaxOptions:  "/rest/gadget/1.0/availableColumns"
+                                ajaxOptions:  "/rest/liatrio-customfilterlists/1.0/configurablefilterlists/config/validate"
                             },
                         ]
     },
@@ -207,6 +209,32 @@ AJS.Gadget({
         args: [{
             key: "filterdata",
             ajaxOptions: function () {
+                var gadget = this;
+                // This code to handle --Default-- needs to stay for
+                // gadgets that were configured before it was removed.
+                var columnNames = gadget.getPrefArray("columnNames");
+                var projectOrFilterId = gadget.getPrefArray("projectOrFilterId");
+                alert(columnNames);
+                alert(projectOrFilterId);
+                var hasDefault = false;
+                var indexOf = -1;
+                for (var i = 0; i < columnNames.length; i++)
+                {
+                    if (columnNames[i] === "--Default--")
+                    {
+                        hasDefault = true;
+                        indexOf = i;
+                        break;
+                    }
+                }
+                if (hasDefault)
+                {
+                    columnNames.splice(indexOf, 1);
+                }
+                if (!this.sortBy){
+                    this.sortBy = null;
+                }
+
                 if (gadgets.views.getCurrentView().getName() === "canvas") {
                     return {
                         url: "/rest/liatrio-customfilterlists/1.0/customfilterlists/generate",

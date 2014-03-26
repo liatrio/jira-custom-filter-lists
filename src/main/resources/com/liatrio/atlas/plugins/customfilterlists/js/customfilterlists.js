@@ -4,7 +4,7 @@ AJS.projectOrFilterPicker = function(gadget, userpref, availableColumns){
     }
 
     var dataModel = new FilterResultsColumnData1 (availableColumns, gadget.getPref(name));
-    var columnPicker = new ColumnPicker1 (name, dataModel);
+    var columnPicker = new ColumnPicker1 ("columnNames", dataModel);
 
     return {
         userpref: userpref,
