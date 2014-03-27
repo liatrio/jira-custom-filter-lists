@@ -3,7 +3,7 @@ AJS.projectOrFilterPicker = function(gadget, userpref, availableColumns){
         gadget.projectOrFilterName = gadget.getMsg("gadget.common.filterid.none.selected");
     }
 
-    var dataModel = new FilterResultsColumnData1 (availableColumns, gadget.getPref(name));
+    var dataModel = new FilterResultsColumnData1 (availableColumns, gadget.getPref("columnNames"));
     var columnPicker = new ColumnPicker1 ("columnNames", dataModel);
 
     return {
@@ -19,14 +19,12 @@ AJS.projectOrFilterPicker = function(gadget, userpref, availableColumns){
                     type: "hidden",
                     name: userpref
                 }).val(gadget.getPref(userpref))
-            ).append(
-                AJS.$("<span/>").attr({id:"filter_" + userpref + "_name"}).addClass("filterpicker-value-name field-value").text(gadget.projectOrFilterName)
             );
 
-            AJS.$("#filter_" + userpref + "_name").bind("DOMSubtreeModified", function() {
-                var d1 = AJS.$("#filter_" + userpref + "_id").val();
-                var d2 = AJS.$("#filter_" + userpref + "_name").text();
-                dataModel.selectColumn("created");
+            AJS.$("#filter_projectOrFilterId_id").bind("DOMSubtreeModified", function() {
+                var filterId = AJS.$("#filter_" + userpref + "_id").val();
+                dataModel.selectColumn(filterId);
+                gadget.resize();
             });
 
             parentDiv.append(
@@ -68,7 +66,6 @@ AJS.projectOrFilterPicker = function(gadget, userpref, availableColumns){
                 dataModel: dataModel,
                 baseUrl: jQuery.ajaxSettings.baseUrl,
                 relatedId: "filter_" + userpref + "_id",
-                relatedDisplayId: "filter_" + userpref + "_name",
                 gadget: gadget,
                 filtersLabel: gadget.getMsg("gadget.common.filters"),
                 projectsLabel: gadget.getMsg("gadget.common.projects")
@@ -110,24 +107,12 @@ AJS.autoFilters = function(options) {
 
     that.completeField = function(value) {
         AJS.$("#" + options.relatedId).val(value.id);
-        AJS.$("#" + options.relatedDisplayId).addClass("success").text(value.name).change();
         AJS.$("#" + options.fieldID).val("");
     };
 
-    /**
-     * Create html elements from JSON object
-     * @method renderSuggestions
-     * @param {Object} response - JSON object
-     * @returns {Array} Multidimensional array, one column being the html element and the other being its
-     * corressponding complete value.
-     */
     that.renderSuggestions = function(response) {
-
-
         var resultsContainer, suggestionNodes = [];
-
         this.responseContainer.addClass("aui-list");
-
         // remove previous results
         this.clearResponseContainer();
 
@@ -135,16 +120,12 @@ AJS.autoFilters = function(options) {
         parent.find("span.inline-error").text("");
 
         if (response && response.filters && response.filters.length > 0) {
-
-
             resultsContainer = AJS.$("<ul class='aui-list-section aui-first aui-last'/>").appendTo(this.responseContainer);
-
             jQuery(response.filters).each(function() {
                 if (!this.isModified){
                     this.isModified = true;
                     this.id = "filter-" + this.id;
                 }
-
                 var item = jQuery("<li class='aui-list-item' />").attr("id", this.id +"_" + options.fieldID + "_listitem");
                 var link = AJS.$("<a href='#' class='aui-list-item-link' />").append(
                         AJS.$("<span />").addClass("filter-name").html(this.nameHtml)
@@ -153,42 +134,31 @@ AJS.autoFilters = function(options) {
                         e.preventDefault();
                     })
                     .appendTo(item);
-
                 if (this.descHtml){
                     link.append(
                         AJS.$("<span />").addClass("filter-desc").html(this.descHtml)
                     );
                 }
-
                 item.attr("title", link.text());
-
                 // add html element and corresponding complete value  to sugestionNodes Array
                 suggestionNodes.push([item.appendTo(resultsContainer), this]);
-
             });
         }
-
         if (suggestionNodes.length > 0) {
             this.responseContainer.removeClass("no-results");
             that.addSuggestionControls(suggestionNodes);
         } else {
             this.responseContainer.addClass("no-results");
         }
-
         return suggestionNodes;
-
     };
 
     // Use autocomplete only once the field has atleast 2 characters
     options.minQueryLength = 1;
-
     options.maxHeight = 200;
-
     // wait 1/4 of after someone starts typing before going to server
     options.queryDelay = 0.25;
-
     that.init(options);
-
     return that;
 };
 
@@ -385,49 +355,6 @@ function ColumnPicker1 (fieldName, dataModel) {
         });
     }
 
-    function createSelectElement (selectElement, addButton, dataModel) {
-        populateSelectData (selectElement, dataModel);
-
-        // Notify the data model when an item is selected, by clicking the button or pressing ENTER on the list
-        addButton.click(addSelectedItem);
-        selectElement.keyup(function (event) {
-            if (event.which == 13) {
-                addSelectedItem();
-            }
-        })
-
-        function addSelectedItem() {
-            var newValue = selectElement.val();
-            if (newValue != null && newValue != "") {
-                alert(newValue);
-                dataModel.selectColumn(newValue);
-            }
-        }
-
-        // Event triggered when a field is selected, and should disappear from this list.
-        AJS.$(document).bind("column-data-item-selected", function (document, data) {
-            selectElement.children("[value=" + data.column.value + "]").remove();
-        });
-
-        // Event triggered when a field is unselected, and should reappear in this list in the right place.
-        AJS.$(document).bind("column-data-item-unselected", function (document, data) {
-            selectElement.children(":eq(" + data.index + ")").after(
-                AJS.$("<option>").attr("value", data.column.value).text(data.column.label));
-        });
-    }
-
-    function populateSelectData (selectElement, dataModel) {
-        var unselectedColumns = dataModel.getUnselectedColumns();
-        var fields = [];
-        selectElement.append(AJS.$("<option></option>",
-                { value: "",
-                  text: AJS.I18n.getText("gadget.issuetable.common.column.picker.prompt") }));
-        AJS.$(unselectedColumns).each(function () {
-            fields.push('<option value="'+AJS.escapeHtml(this.value)+'">'+AJS.escapeHtml(this.label)+'</option>');
-        });
-        selectElement.append(AJS.$(fields.join("")));
-    }
-
     // This is a set of hidden fields that provides the value submitted back to the server when "Save" is clicked.
     function createSubmitElement (submitElement, fieldName, dataModel) {
         synchronizeSubmitData (submitElement, fieldName, dataModel);
@@ -471,7 +398,6 @@ function FilterResultsColumnData1 (allColumns, currentConfig) {
         // Support data generated before column reordering was possible
         currentConfig = currentConfig.replace("--Default--", "issuetype|issuekey|priority|summary");
         var configuredColumns = currentConfig.split("|");
-
         this.populateSelectedColumns(configuredColumns, allColumns);
     };
 

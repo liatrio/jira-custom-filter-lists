@@ -86,7 +86,7 @@ public class CustomFilterListsResource {
             filters = searchRequestService.getFavouriteFilters(currentUser);
         } else {
             final SharedEntitySearchParametersBuilder searchParameters = new SharedEntitySearchParametersBuilder();
-            searchParameters.setSortColumn(SharedEntityColumn.FAVOURITE_COUNT, false);
+            searchParameters.setSortColumn(SharedEntityColumn.ID, false);
             SharedEntitySearchParameters params = searchParameters.toSearchParameters();
             SharedEntitySearchResult<SearchRequest> searchResult = searchRequestService.search(new JiraServiceContextImpl(currentUser), params, 0, 400);
             filters = searchResult.getResults();

@@ -15,6 +15,8 @@
         <Require feature="setprefs"/>
         <Require feature="settitle"/>
         <Require feature="dynamic-height"/>
+        <Optional feature="auth-refresh"/>
+        <Optional feature="atlassian.util"/>
         <Require feature="oauthpopup"/>
         #oauth
         #supportedLocales("gadget.common,gadget.filterstats,customfilterlists.customfilterlistgadget,core.dateutils")
@@ -23,7 +25,6 @@
     <UserPref name="isPopup" datatype="hidden" default_value="false"/>
     <UserPref name="refresh" datatype="hidden" default_value="false"/>
     <UserPref name="columnNames" datatype="hidden" default_value="--Default--"/>
-    <UserPref name="projectOrFilterId" datatype="hidden" default_value="--Default--"/>
     <UserPref name="customTitle" datatype="hidden"/>
     <UserPref name="displayStyle" datatype="hidden"/>
     <UserPref name="includeLinks" datatype="hidden" />
@@ -165,10 +166,9 @@ AJS.Gadget({
             };
         },
         args: [{
-                                key: "columnChoices",
-                                ajaxOptions:  "/rest/liatrio-customfilterlists/1.0/configurablefilterlists/config/validate"
-                            },
-                        ]
+            key: "columnChoices",
+            ajaxOptions:  "/rest/liatrio-customfilterlists/1.0/configurablefilterlists/listfilters"
+        }]
     },
     view: {
         enableReload: true,
@@ -213,9 +213,6 @@ AJS.Gadget({
                 // This code to handle --Default-- needs to stay for
                 // gadgets that were configured before it was removed.
                 var columnNames = gadget.getPrefArray("columnNames");
-                var projectOrFilterId = gadget.getPrefArray("projectOrFilterId");
-                alert(columnNames);
-                alert(projectOrFilterId);
                 var hasDefault = false;
                 var indexOf = -1;
                 for (var i = 0; i < columnNames.length; i++)
@@ -234,6 +231,7 @@ AJS.Gadget({
                 if (!this.sortBy){
                     this.sortBy = null;
                 }
+                alert(columnNames);
 
                 if (gadgets.views.getCurrentView().getName() === "canvas") {
                     return {
