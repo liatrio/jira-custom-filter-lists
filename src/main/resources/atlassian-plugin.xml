@@ -39,4 +39,7 @@
     <gadget key="customfilterlists-gadget" name="Custom Filter Lists Gadget" location="com/liatrio/atlas/plugins/customfilterlists/gadgets/customfilterlists-gadget.xml">
         <param name="roles-required">browse</param>
     </gadget>
+    <gadget key="configurablefilterlists-gadget" name="Configurable Filter Lists Gadget" location="com/liatrio/atlas/plugins/customfilterlists/gadgets/configurablefilterlists-gadget.xml">
+        <param name="roles-required">browse</param>
+    </gadget>
 </atlassian-plugin>
