@@ -1,4 +1,4 @@
-AJS.projectOrFilterPicker = function(gadget, userpref, availableColumns){
+AJS.myFilterListPicker = function(gadget, userpref, availableColumns){
     if (!gadget.projectOrFilterName){
         gadget.projectOrFilterName = gadget.getMsg("gadget.common.filterid.none.selected");
     }
@@ -21,9 +21,8 @@ AJS.projectOrFilterPicker = function(gadget, userpref, availableColumns){
                 }).val(gadget.getPref(userpref))
             );
 
-            AJS.$("#filter_projectOrFilterId_id").bind("DOMSubtreeModified", function() {
-                var filterId = AJS.$("#filter_" + userpref + "_id").val();
-                dataModel.selectColumn(filterId);
+            AJS.$("#filter_projectOrFilterId_id").change(function() {
+                dataModel.selectColumn(AJS.$("#filter_" + userpref + "_id").val());
                 gadget.resize();
             });
 
@@ -34,12 +33,12 @@ AJS.projectOrFilterPicker = function(gadget, userpref, availableColumns){
                         id: "quickfind-label"
                     }).text(gadget.getMsg("gadget.common.quick.find"))
                 ).append(
-                    AJS.$("<input/>").attr("id", "quickfind")
+                    AJS.$("<input/>").attr("id", "quickfind").addClass("text")
                 ).append(
                     AJS.$("<span/>").addClass("inline-error")
                 )
             );
-            if (gadget.isLocal()){
+            if (gadget.isLocal()) {
                 parentDiv.append(
                     AJS.$("<a href='#'/>").addClass("advanced-search").attr({
                         id: "filter_" + userpref + "_advance",
@@ -48,9 +47,9 @@ AJS.projectOrFilterPicker = function(gadget, userpref, availableColumns){
                         var url = jQuery.ajaxSettings.baseUrl + "/secure/FilterPickerPopup.jspa?showProjects=false&field=" + userpref;
                         var windowVal = "filter_" + userpref + "_window";
                         var prefs = "width=800, height=500, resizable, scrollbars=yes";
-
-                        var newWindow = window.open(url, windowVal, prefs);
+                        var newWindow = window.open(url, windowVal, prefs, false);
                         newWindow.focus();
+                        newWindow.onunload = newWindow.onbeforeunload = function() { dataModel.selectColumn(AJS.$("#filter_" + userpref + "_id").val()); gadget.resize(); };
                         e.preventDefault();
                     })
                 );
@@ -78,9 +77,7 @@ AJS.projectOrFilterPicker = function(gadget, userpref, availableColumns){
  * Filter autocomplete picker
  */
 AJS.autoFilters = function(options) {
-    // prototypial inheritance (http://javascript.crockford.com/prototypal.html)
     var that = begetObject(jira.widget.autocomplete.REST);
-
     that.getAjaxParams = function(){
         return {
             url: options.baseUrl + "/rest/gadget/1.0/pickers/filters",
@@ -94,19 +91,18 @@ AJS.autoFilters = function(options) {
                 if (XMLHttpRequest.data){
                     var errorCollection = XMLHttpRequest.data.errors;
                     if (errorCollection){
-                        AJS.$(errorCollection).each(function(){
+                        AJS.$(errorCollection).each(function() {
                             var parent = AJS.$("#" + this.field).parent();
                             parent.find("span.inline-error").text(options.gadget.getMsg(this.error));
                         });
                     }
                 }
             }
-
         };
     };
 
     that.completeField = function(value) {
-        AJS.$("#" + options.relatedId).val(value.id);
+        AJS.$("#" + options.relatedId).val(value.id).trigger("change");
         AJS.$("#" + options.fieldID).val("");
     };
 
@@ -153,10 +149,8 @@ AJS.autoFilters = function(options) {
         return suggestionNodes;
     };
 
-    // Use autocomplete only once the field has atleast 2 characters
     options.minQueryLength = 1;
     options.maxHeight = 200;
-    // wait 1/4 of after someone starts typing before going to server
     options.queryDelay = 0.25;
     that.init(options);
     return that;
@@ -165,8 +159,6 @@ AJS.autoFilters = function(options) {
 function ColumnPicker1 (fieldName, dataModel) {
     this.fieldName = fieldName;
     this.dataModel = dataModel;
-
-    /* This is the function that inserts the column picker control into the gadget's edit panel */
     this.initalize = function (parentDiv) {
         var tableElement = AJS.$("<table/>").attr ({
             id: "column-picker-restful-table"
@@ -232,14 +224,7 @@ function ColumnPicker1 (fieldName, dataModel) {
         };
 
         var makeSortable = function (instance) {
-            // This is straight copied and pasted from restfultable.js,
-            // but modified to avoid making an AJAX call
-            // TODO: file an issue to make this pluggable
-
-            // Add allowance for another cell to the thead
             instance.$theadRow.prepend("<th />");
-
-            // Allow drag and drop reordering of rows
             instance.$tbody.sortable({
                 handle: "." + instance.classNames.DRAG_HANDLE,
                 helper: function(e, elt) {
@@ -251,34 +236,26 @@ function ColumnPicker1 (fieldName, dataModel) {
                 },
                 start: function (event, ui) {
                     var $this = ui.placeholder.find("td");
-                    // Make sure that when we start dragging widths do not change
                     ui.item
                             .addClass(instance.classNames.MOVEABLE)
                             .children().each(function (i) {
                                 AJS.$(this).width($this.eq(i).width());
                             });
 
-                    // Add a <td> to the placeholder <tr> to inherit CSS styles.
                     ui.placeholder
                             .html('<td colspan="' + instance.getColumnCount() + '">&nbsp;</td>')
                             .css("visibility", "visible");
-
-                    // Stop hover effects etc from occuring as we move the mouse (while dragging) over other rows
                     instance.getRowFromElement(ui.item[0]).trigger(instance._events.MODAL);
                 },
                 stop: function (event, ui) {
                     ui.item
                             .removeClass(instance.classNames.MOVEABLE)
                             .children().attr("style", "");
-
                     ui.placeholder.removeClass(instance.classNames.ROW);
-
-                    // Return table to a normal state
                     instance.getRowFromElement(ui.item[0]).trigger(instance._events.MODELESS);
                 },
                 update: function (event, ui) {
                     var row = instance.getRowFromElement(ui.item[0]);
-
                     if (row) {
                         AJS.triggerEvtForInst(instance._events.REORDER_SUCCESS, instance, []);
                     }
@@ -291,7 +268,6 @@ function ColumnPicker1 (fieldName, dataModel) {
                 zIndex: 8000
             });
 
-            // Prevent text selection while reordering.
             instance.$tbody.bind("selectstart mousedown", function (event) {
                 return !AJS.$(event.target).is("." + instance.classNames.DRAG_HANDLE);
             });
@@ -384,7 +360,7 @@ function ColumnPicker1 (fieldName, dataModel) {
     }
 
     function createHelpText (tableHelpTextElement) {
-        tableHelpTextElement.text(AJS.I18n.getText("gadget.issuetable.common.column.reorder.instructions"));
+        tableHelpTextElement.text(AJS.I18n.getText("customfilterlists.configurablefilterlistsgadget.filters.descr"));
     }
 }
 
@@ -395,8 +371,6 @@ function FilterResultsColumnData1 (allColumns, currentConfig) {
     // Separate out the columns that are selected from the full list
     this.populateColumns = function (allColumns, currentConfig) {
         this.allColumns = allColumns;
-        // Support data generated before column reordering was possible
-        currentConfig = currentConfig.replace("--Default--", "issuetype|issuekey|priority|summary");
         var configuredColumns = currentConfig.split("|");
         this.populateSelectedColumns(configuredColumns, allColumns);
     };
@@ -408,9 +382,6 @@ function FilterResultsColumnData1 (allColumns, currentConfig) {
             var configuredColumn = this;
             var i = findColumnIndex(configuredColumn, allColumns);
             if (i != -1) {
-                // If the user had the configuration set to --Default--|issuetype,
-                // they would end up with two issuetypes in the selected list, and things break.
-                // De-dupe them here and only keep the first, as only the first was shown in the table historically.
                 if (findColumnIndex(configuredColumn, selectedColumns) == -1) {
                     selectedColumns.push(allColumns[i]);
                 }

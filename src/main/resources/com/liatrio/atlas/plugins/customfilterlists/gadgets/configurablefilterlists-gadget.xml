@@ -40,7 +40,6 @@ AJS.Gadget({
     config: {
         descriptor: function (args) {
             var gadget = this;
-
             var searchParam;
             if (/^jql-/.test(this.getPref("projectOrFilterId")) || this.getPref("isPopup") === "true"){
                 searchParam =
@@ -51,7 +50,7 @@ AJS.Gadget({
                     };
             }
             else{
-                searchParam = AJS.projectOrFilterPicker(gadget,"projectOrFilterId", args.columnChoices.filter);
+                searchParam = AJS.myFilterListPicker(gadget,"projectOrFilterId", args.columnChoices.filter);
             }
 
             return  {
@@ -77,51 +76,51 @@ AJS.Gadget({
                     },
                     {
                         userpref: "displayStyle",
-                        label: gadget.getMsg("customfilterlists.customfilterlistgadget.displayStyle"),
-                        description: gadget.getMsg("customfilterlists.customfilterlistgadget.displayStyle.descr"),
+                        label: gadget.getMsg("customfilterlists.configurablefilterlistsgadget.displayStyle"),
+                        description: gadget.getMsg("customfilterlists.configurablefilterlistsgadget.displayStyle.descr"),
                         type: "select",
                         selected: gadget.getPref("displayStyle"),
                         options:[
                             {
-                                label: gadget.getMsg("customfilterlists.customfilterlistgadget.displayStyle.html"),
+                                label: gadget.getMsg("customfilterlists.configurablefilterlistsgadget.displayStyle.html"),
                                 value: "html"
                             },
                             {
-                                label: gadget.getMsg("customfilterlists.customfilterlistgadget.displayStyle.dropdown"),
+                                label: gadget.getMsg("customfilterlists.configurablefilterlistsgadget.displayStyle.dropdown"),
                                 value: "dropdown"
                             }
                         ]
                     },
                     {
                         userpref: "includeLinks",
-                        label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeLinks"),
-                        description: gadget.getMsg("customfilterlists.customfilterlistgadget.includeLinks.descr"),
+                        label: gadget.getMsg("customfilterlists.configurablefilterlistsgadget.includeLinks"),
+                        description: gadget.getMsg("customfilterlists.configurablefilterlistsgadget.includeLinks.descr"),
                         type: "select",
                         selected: gadget.getPref("includeLinks"),
                         options:[
                             {
-                                label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeLinks.yes"),
+                                label: gadget.getMsg("customfilterlists.configurablefilterlistsgadget.includeLinks.yes"),
                                 value: "true"
                             },
                             {
-                                label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeLinks.no"),
+                                label: gadget.getMsg("customfilterlists.configurablefilterlistsgadget.includeLinks.no"),
                                 value: "false"
                             }
                         ]
                     },
                     {
                         userpref: "includeCounts",
-                        label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeCounts"),
-                        description: gadget.getMsg("customfilterlists.customfilterlistgadget.includeCounts.descr"),
+                        label: gadget.getMsg("customfilterlists.configurablefilterlistsgadget.includeCounts"),
+                        description: gadget.getMsg("customfilterlists.configurablefilterlistsgadget.includeCounts.descr"),
                         type: "select",
                         selected: gadget.getPref("includeCounts"),
                         options:[
                             {
-                                label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeCounts.yes"),
+                                label: gadget.getMsg("customfilterlists.configurablefilterlistsgadget.includeCounts.yes"),
                                 value: "true"
                             },
                             {
-                                label: gadget.getMsg("customfilterlists.customfilterlistgadget.includeCounts.no"),
+                                label: gadget.getMsg("customfilterlists.configurablefilterlistsgadget.includeCounts.no"),
                                 value: "false"
                             }
                         ]

@@ -14,6 +14,9 @@
 
     <!-- Web resources -->
     <web-resource key="customfilterlists-resources" name="Custom Filter Lists Web Resources">
+        <transformation extension="js">
+            <transformer key="jsI18n"/>
+        </transformation>
         <dependency>com.atlassian.auiplugin:ajs</dependency>
         <dependency>com.atlassian.jira.gadgets:common</dependency>
         <dependency>com.atlassian.auiplugin:aui-experimental-restfultable</dependency>
