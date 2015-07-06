@@ -17,21 +17,6 @@
     <description>This is the com.liatrio.atlas.plugins:customfilterlists plugin for Atlassian JIRA.</description>
     <packaging>atlassian-plugin</packaging>
 
-    <repositories>
-      <repository>
-        <id>atlassian-public</id>
-            <url>https://maven.atlassian.com/repository/public</url>
-            <snapshots>
-              <enabled>true</enabled>
-              <updatePolicy>never</updatePolicy>
-              <checksumPolicy>warn</checksumPolicy>
-            </snapshots>
-            <releases>
-              <enabled>true</enabled>
-              <checksumPolicy>warn</checksumPolicy>
-           </releases>
-         </repository>
-     </repositories>
     <dependencies>
         <dependency>
             <groupId>com.atlassian.jira</groupId>
@@ -135,6 +120,37 @@
             </plugin>
         </plugins>
     </build>
+    
+    <repositories>
+        <repository>
+            <id>atlassian-public</id>
+            <url>https://maven.atlassian.com/repository/public</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+                <checksumPolicy>warn</checksumPolicy>
+            </releases>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>atlassian-public</id>
+            <url>https://maven.atlassian.com/repository/public</url>
+            <releases>
+                <enabled>true</enabled>
+                <checksumPolicy>warn</checksumPolicy>
+            </releases>
+            <snapshots>
+                <updatePolicy>never</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 
     <properties>
         <!--<jira.version>6.1-OD-07</jira.version>-->
