@@ -154,7 +154,7 @@
 
     <properties>
         <jira.version>6.4.7</jira.version>
-        <jira.rest.version>6.4</jira.rest.version>
+        <jira.rest.version>6.4.7</jira.rest.version>
         <amps.version>5.0.13</amps.version>
         <useFastdevCli>false</useFastdevCli>
     </properties>
