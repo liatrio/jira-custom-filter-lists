@@ -6,24 +6,18 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.liatrio.atlas.plugins</groupId>
     <artifactId>customfilterlists</artifactId>
-    <version>1.2</version>
+    <version>1.0-SNAPSHOT</version>
 
     <organization>
-        <name>AM Works</name>
-        <url>http://ru.linkedin.com/in/andreymarkelov</url>
+        <name>Liatrio</name>
+        <url>http://www.liatrio.com</url>
     </organization>
 
-    <name>Custom Filter Lists</name>
-    <description>This is the com.liatrio.atlas.plugins:customfilterlists plugin for Atlassian JIRA.</description>
+    <name>Custom Filter Lists Gadget</name>
+    <description>Dashboard Gadget to show custom list of filters in Atlassian JIRA.</description>
     <packaging>atlassian-plugin</packaging>
 
     <dependencies>
-        <!-- <dependency>
-            <groupId>com.atlassian.jira</groupId>
-            <artifactId>atlassian-jira</artifactId>
-            <version>${jira.version}</version>
-            <scope>provided</scope>
-        </dependency> -->
         <dependency>
             <groupId>com.atlassian.jira</groupId>
             <artifactId>jira-api</artifactId>
